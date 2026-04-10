@@ -51,6 +51,7 @@ const TYPE_LABELS: Record<string, string> = {
 export default function DashboardPage() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [sigunguList, setSigunguList] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState('');
   const [filterSigungu, setFilterSigungu] = useState('');
@@ -70,14 +71,13 @@ export default function DashboardPage() {
       if (data.success) {
         setApplicants(data.applicants);
         setStats(data.stats);
+        if (data.sigunguList) setSigunguList(data.sigunguList);
       }
     } catch { /* ignore */ }
     finally { setLoading(false); }
   }, [filterType, filterSigungu, filterStatus]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-
-  const sigunguList = [...new Set(applicants.map(a => a.sigungu))].sort();
 
   const handleStatusChange = async (app: Applicant, newStatus: string) => {
     setActionLoading(app.applicationId);

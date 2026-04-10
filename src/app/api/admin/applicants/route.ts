@@ -44,11 +44,12 @@ export async function GET(request: NextRequest) {
     );
 
     const applicants: Record<string, unknown>[] = [];
+    const allSigungu = new Set<string>();
     const stats = { total: 0, totalSlots: 0, byType: {} as Record<string, { filled: number; total: number }>, byStatus: {} as Record<string, number> };
 
     for (const { sheet, rows } of responses) {
       let typeFilled = 0;
-      const typeTotal = rows.length - 1; // 헤더 제외
+      const typeTotal = rows.length - 1;
 
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
@@ -61,12 +62,13 @@ export async function GET(request: NextRequest) {
         const timestamp = row[20] || '';
         const status = row[21] || '';
 
+        if (sigungu) allSigungu.add(sigungu);
+
         if (name) {
           typeFilled++;
           stats.total++;
           stats.byStatus[status || 'applied'] = (stats.byStatus[status || 'applied'] || 0) + 1;
 
-          // 필터링
           if (filterSigungu && sigungu !== filterSigungu) continue;
           if (filterStatus && status !== filterStatus) continue;
 
@@ -106,7 +108,7 @@ export async function GET(request: NextRequest) {
       return tb.localeCompare(ta);
     });
 
-    return NextResponse.json({ success: true, applicants, stats });
+    return NextResponse.json({ success: true, applicants, stats, sigunguList: [...allSigungu].sort() });
   } catch (error) {
     console.error('admin applicants error:', error);
     return NextResponse.json({ success: false, message: '데이터 조회 중 오류가 발생했습니다.' }, { status: 500 });
