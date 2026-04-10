@@ -179,7 +179,10 @@ function getDayGroup(timeSlot: string): string {
 }
 
 // === Applications ===
-export async function submitApplication(data: ApplicationRequest): Promise<{ success: boolean; id: string; status: string; message: string }> {
+export async function submitApplication(
+  data: ApplicationRequest,
+  options?: { skipBlacklist?: boolean; notes?: string },
+): Promise<{ success: boolean; id: string; status: string; message: string }> {
   if (useMock) return (await getMock()).submitApplication(data);
 
   const sheets = await getSheetsClient();
@@ -195,7 +198,10 @@ export async function submitApplication(data: ApplicationRequest): Promise<{ suc
   });
   const existingRows = existingRes.data.values || [];
 
-  // 블랙리스트 체크
+  // 블랙리스트 체크 (관리자 등록 시 건너뜀)
+  if (options?.skipBlacklist) {
+    // skip
+  } else {
   const blacklistRes = await sheets.spreadsheets.values.get({
     spreadsheetId,
     range: '블랙리스트!A:A',
@@ -206,6 +212,7 @@ export async function submitApplication(data: ApplicationRequest): Promise<{ suc
     if (blPhone && blPhone === normalizedPhone) {
       return { success: false, id: '', status: '', message: '참관인 모집 규정 위반으로 참관인 신청이 반려되었습니다.' };
     }
+  }
   }
 
   // 중복 체크: 같은 전화번호 + 같은 날 → 장소 무관하게 차단
@@ -293,7 +300,7 @@ export async function submitApplication(data: ApplicationRequest): Promise<{ suc
     data.address_detail,  // L: 상세주소
     data.occupation,      // M: 직업
     data.account,         // N: 계좌
-    '',                   // O: 비고
+    options?.notes || '', // O: 비고
   ];
 
   if (targetRowIdx !== -1) {
