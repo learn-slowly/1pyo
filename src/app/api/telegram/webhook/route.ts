@@ -19,11 +19,12 @@ export async function POST(request: NextRequest) {
     if (!message?.text) return NextResponse.json({ ok: true });
 
     const chatId = String(message.chat.id);
-    const text = message.text.trim();
+    // 봇 멘션 제거 (예: /도움@pyo1_bot → /도움)
+    const text = message.text.trim().replace(/@\w+/g, '');
     const sender = [message.from?.last_name, message.from?.first_name].filter(Boolean).join('');
 
     // 허용된 채팅방에서만 명령어 처리
-    if (chatId !== ALLOWED_CHAT_ID) {
+    if (ALLOWED_CHAT_ID && chatId !== ALLOWED_CHAT_ID) {
       return NextResponse.json({ ok: true });
     }
 
