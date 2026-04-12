@@ -23,6 +23,13 @@ export default function Home() {
           >
             내 신청 확인
           </Link>
+
+          <Link
+            href="/report"
+            className="block w-full py-4 border-2 border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            참관 보고
+          </Link>
         </div>
 
         <p className="text-xs text-gray-400">

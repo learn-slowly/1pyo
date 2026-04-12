@@ -3,6 +3,8 @@ import type {
   ObservationType,
   Station,
   ApplicationRequest,
+  VoterCountReport,
+  IncidentReport,
 } from './types';
 
 // Google Sheets가 설정되지 않으면 mock 사용
@@ -415,4 +417,137 @@ async function updateSeatCount(
       break;
     }
   }
+}
+
+// === 참관 보고 ===
+export async function submitVoterCountReport(
+  data: VoterCountReport,
+): Promise<{ success: boolean; message: string }> {
+  if (useMock) return (await getMock()).submitVoterCountReport(data);
+
+  const sheets = await getSheetsClient();
+  const spreadsheetId = getSpreadsheetId();
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: '투표인수보고!A:H',
+    valueInputOption: 'USER_ENTERED',
+    requestBody: {
+      values: [[
+        new Date().toISOString(),
+        data.reporter_name,
+        data.reporter_phone,
+        data.observation_type === 'polling' ? '본투표' : '사전투표',
+        data.station_name,
+        data.sigungu,
+        data.report_hour,
+        data.cumulative_voters,
+      ]],
+    },
+  });
+
+  return { success: true, message: '투표인수가 보고되었습니다.' };
+}
+
+export async function submitIncidentReport(
+  data: IncidentReport,
+): Promise<{ success: boolean; message: string }> {
+  if (useMock) return (await getMock()).submitIncidentReport(data);
+
+  const sheets = await getSheetsClient();
+  const spreadsheetId = getSpreadsheetId();
+
+  const typeLabel = data.observation_type === 'polling' ? '본투표'
+    : data.observation_type === 'early' ? '사전투표' : '개표';
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: '특이사항보고!A:J',
+    valueInputOption: 'USER_ENTERED',
+    requestBody: {
+      values: [[
+        new Date().toISOString(),
+        data.reporter_name,
+        data.reporter_phone,
+        typeLabel,
+        data.station_name,
+        data.sigungu,
+        data.incident_type,
+        data.description,
+        data.objection_filed ? 'Y' : 'N',
+        data.objection_result,
+      ]],
+    },
+  });
+
+  return { success: true, message: '특이사항이 보고되었습니다.' };
+}
+
+// === 블랙리스트 ===
+export async function addToBlacklist(phone: string, reason: string = ''): Promise<{ success: boolean; message: string }> {
+  if (useMock) {
+    console.log('[Mock] 블랙리스트 추가:', phone, reason);
+    return { success: true, message: `${phone} 블랙리스트에 추가되었습니다.` };
+  }
+
+  const sheets = await getSheetsClient();
+  const spreadsheetId = getSpreadsheetId();
+  const normalized = phone.replace(/[^0-9]/g, '');
+
+  // 중복 체크
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: '블랙리스트!A:B',
+  });
+  const rows = res.data.values || [];
+  for (let i = 1; i < rows.length; i++) {
+    const existing = (rows[i][0] || '').replace(/[^0-9]/g, '');
+    if (existing === normalized) {
+      return { success: false, message: `${phone}은(는) 이미 블랙리스트에 있습니다.` };
+    }
+  }
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: '블랙리스트!A:B',
+    valueInputOption: 'USER_ENTERED',
+    requestBody: {
+      values: [["'" + normalized, reason]],
+    },
+  });
+
+  return { success: true, message: `${phone} 블랙리스트에 추가되었습니다.${reason ? ` (사유: ${reason})` : ''}` };
+}
+
+export async function removeFromBlacklist(phone: string): Promise<{ success: boolean; message: string }> {
+  if (useMock) {
+    console.log('[Mock] 블랙리스트 삭제:', phone);
+    return { success: true, message: `${phone} 블랙리스트에서 제거되었습니다.` };
+  }
+
+  const sheets = await getSheetsClient();
+  const spreadsheetId = getSpreadsheetId();
+  const normalized = phone.replace(/[^0-9]/g, '');
+
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: '블랙리스트!A:A',
+  });
+  const rows = res.data.values || [];
+
+  for (let i = 1; i < rows.length; i++) {
+    const existing = (rows[i][0] || '').replace(/[^0-9]/g, '');
+    if (existing === normalized) {
+      // 해당 셀 비우기
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `블랙리스트!A${i + 1}`,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: [['']] },
+      });
+      return { success: true, message: `${phone} 블랙리스트에서 제거되었습니다.` };
+    }
+  }
+
+  return { success: false, message: `${phone}은(는) 블랙리스트에 없습니다.` };
 }

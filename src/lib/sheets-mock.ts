@@ -6,6 +6,8 @@ import type {
   ObservationType,
   Station,
   ApplicationRequest,
+  VoterCountReport,
+  IncidentReport,
 } from './types';
 
 // === Mock Config ===
@@ -203,4 +205,19 @@ function incrementMockCount(station: Station, timeSlot: string): void {
       break;
     }
   }
+}
+
+// === 참관 보고 Mock ===
+export async function submitVoterCountReport(
+  data: VoterCountReport,
+): Promise<{ success: boolean; message: string }> {
+  console.log('[Mock] 투표인수 보고:', data);
+  return { success: true, message: '투표인수가 보고되었습니다.' };
+}
+
+export async function submitIncidentReport(
+  data: IncidentReport,
+): Promise<{ success: boolean; message: string }> {
+  console.log('[Mock] 특이사항 보고:', data);
+  return { success: true, message: '특이사항이 보고되었습니다.' };
 }

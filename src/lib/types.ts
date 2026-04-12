@@ -83,6 +83,29 @@ export interface Config {
   sido: string;
 }
 
+// === 참관 보고 ===
+export interface VoterCountReport {
+  reporter_name: string;
+  reporter_phone: string;
+  observation_type: 'early' | 'polling';
+  station_name: string;
+  sigungu: string;
+  report_hour: string;       // "09", "10", ... "18" 또는 직접입력
+  cumulative_voters: number;
+}
+
+export interface IncidentReport {
+  reporter_name: string;
+  reporter_phone: string;
+  observation_type: ObservationType;
+  station_name: string;
+  sigungu: string;
+  incident_type: string;     // 대리투표 의심, 봉인 훼손, 절차 위반, 참관 제한, 기타
+  description: string;
+  objection_filed: boolean;
+  objection_result: string;
+}
+
 // === API 응답 ===
 export interface StationsResponse {
   stations: Station[];
