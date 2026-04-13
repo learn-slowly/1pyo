@@ -131,72 +131,45 @@ export default function VacanciesPage() {
                   {regionStations.length}곳 · 빈 슬롯 {regionStations.reduce((s, st) => s + totalVacancies(st), 0)}개
                 </span>
               </h2>
-              <div className="overflow-x-auto border rounded-xl bg-white">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="bg-gray-50 border-b">
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">투표소</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">장소</th>
-                      {type === 'polling' && (
-                        <>
-                          <th className="px-3 py-2 text-center text-xs font-medium text-gray-500">오전</th>
-                          <th className="px-3 py-2 text-center text-xs font-medium text-gray-500">오후</th>
-                        </>
-                      )}
-                      {type === 'early' && (
-                        <>
-                          <th className="px-3 py-2 text-center text-xs font-medium text-gray-500">5/29 오전</th>
-                          <th className="px-3 py-2 text-center text-xs font-medium text-gray-500">5/29 오후</th>
-                          <th className="px-3 py-2 text-center text-xs font-medium text-gray-500">5/30 오전</th>
-                          <th className="px-3 py-2 text-center text-xs font-medium text-gray-500">5/30 오후</th>
-                        </>
-                      )}
-                      {type === 'counting' && (
-                        <th className="px-3 py-2 text-center text-xs font-medium text-gray-500">현황</th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {regionStations.map((station) => {
-                      const slots = getSlotInfo(station);
-                      const slotKeys = getSlotKeys(station);
-                      return (
-                        <tr key={station.id} className="border-b last:border-0 hover:bg-gray-50">
-                          <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-900">{station.station_name}</td>
-                          <td className="px-3 py-2 whitespace-nowrap text-gray-500">{station.building_name || '-'}</td>
-                          {slots.map((slot, i) => {
-                            const remaining = slot.max - slot.count;
-                            const full = remaining <= 0;
-                            return (
-                              <td key={slot.label} className="px-3 py-2 text-center whitespace-nowrap">
-                                {full ? (
-                                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">
-                                    {slot.count}/{slot.max}
-                                  </span>
-                                ) : (
-                                  <button
-                                    onClick={() => {
-                                      const params = new URLSearchParams({
-                                        type,
-                                        sigungu: station.sigungu,
-                                        stationId: station.id,
-                                        timeSlot: slotKeys[i],
-                                      });
-                                      router.push(`/admin/register?${params}`);
-                                    }}
-                                    className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700 hover:bg-green-100 cursor-pointer transition-colors"
-                                  >
-                                    {slot.count}/{slot.max}
-                                  </button>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div className="grid gap-2">
+                {regionStations.map((station) => {
+                  const slots = getSlotInfo(station);
+                  const slotKeys = getSlotKeys(station);
+                  return (
+                    <div key={station.id} className="bg-white border rounded-xl p-3">
+                      <div className="mb-2">
+                        <p className="font-medium text-sm text-gray-900">{station.station_name}</p>
+                        {station.building_name && <p className="text-xs text-gray-500">{station.building_name}</p>}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {slots.map((slot, i) => {
+                          const full = slot.max - slot.count <= 0;
+                          return full ? (
+                            <span key={slot.label} className="text-xs font-bold px-2.5 py-1 rounded-lg bg-gray-100 text-gray-400">
+                              {slot.label} {slot.count}/{slot.max}
+                            </span>
+                          ) : (
+                            <button
+                              key={slot.label}
+                              onClick={() => {
+                                const params = new URLSearchParams({
+                                  type,
+                                  sigungu: station.sigungu,
+                                  stationId: station.id,
+                                  timeSlot: slotKeys[i],
+                                });
+                                router.push(`/admin/register?${params}`);
+                              }}
+                              className="text-xs font-bold px-2.5 py-1 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
+                            >
+                              {slot.label} {slot.count}/{slot.max}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
