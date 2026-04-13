@@ -153,7 +153,7 @@ export default function ApplyForm() {
       {/* 헤더 */}
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">참관인 신청</h1>
-        <p className="text-sm text-gray-500 mt-1">2026한표정의</p>
+        <p className="text-sm text-gray-500 mt-1">2026한표</p>
       </div>
 
       {/* 진행 단계 */}

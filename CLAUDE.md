@@ -1,4 +1,4 @@
-# 2026한표정의 (1pyo)
+# 2026한표 (1pyo)
 
 ## Project Overview
 Korean election observer (참관인) recruitment platform for 정의당 (Justice Party).

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "2026한표정의",
+  title: "2026한표",
   description: "한 표의 정의를 지키는, 정의당의 한 표 지킴이",
 };
 

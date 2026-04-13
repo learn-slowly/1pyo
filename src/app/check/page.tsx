@@ -61,7 +61,7 @@ export default function CheckPage() {
       <div className="max-w-lg mx-auto px-4 py-6 w-full flex-1">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">내 신청 확인</h1>
-          <p className="text-sm text-gray-500 mt-1">2026한표정의</p>
+          <p className="text-sm text-gray-500 mt-1">2026한표</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 mb-6">
