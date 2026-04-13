@@ -50,13 +50,14 @@ export default function StationList({ stations, lotteryMode, selectedStation, on
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div>
         <h2 className="text-lg font-bold text-gray-900">
           투표소를 선택하세요
           <span className="ml-2 text-sm font-normal text-gray-500">
             ({availableCount}/{stations.length}곳 잔여)
           </span>
         </h2>
+        <p className="text-xs text-gray-500 mt-1">현재 투표소는 2025년 6월 대선 기준이며, 사전투표소는 5월 19일, 본투표소는 5월 24일 선관위에서 확정됩니다.</p>
       </div>
 
       <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">

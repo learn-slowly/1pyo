@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { Suspense, useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { ObservationType, Station, StationsResponse } from '@/lib/types';
 import { TIME_SLOT_LABELS } from '@/lib/constants';
 
@@ -28,13 +29,39 @@ function getTimeSlots(type: ObservationType): { value: string; label: string }[]
   }
 }
 
+function isSlotFull(station: Station, slotValue: string): boolean {
+  switch (station.type) {
+    case 'polling':
+      if (slotValue === 'am') return station.am_count >= station.am_max;
+      if (slotValue === 'pm') return station.pm_count >= station.pm_max;
+      return false;
+    case 'early': {
+      const key = `${slotValue}_count` as keyof typeof station;
+      return (station[key] as number) >= station.slot_max;
+    }
+    case 'counting':
+      return station.current_count >= station.max_count;
+  }
+}
+
 export default function AdminRegisterPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-12 text-gray-400">불러오는 중...</div>}>
+      <AdminRegisterContent />
+    </Suspense>
+  );
+}
+
+function AdminRegisterContent() {
+  const searchParams = useSearchParams();
+
   // 투표소 선택
-  const [type, setType] = useState<ObservationType>('polling');
-  const [sigungu, setSigungu] = useState('');
-  const [stationId, setStationId] = useState('');
-  const [timeSlot, setTimeSlot] = useState('');
+  const [type, setType] = useState<ObservationType>((searchParams.get('type') as ObservationType) || 'polling');
+  const [sigungu, setSigungu] = useState(searchParams.get('sigungu') || '');
+  const [stationId, setStationId] = useState(searchParams.get('stationId') || '');
+  const [timeSlot, setTimeSlot] = useState(searchParams.get('timeSlot') || '');
   const [stationsData, setStationsData] = useState<StationsResponse | null>(null);
+  const [initialized, setInitialized] = useState(false);
 
   // 신청자 정보
   const [name, setName] = useState('');
@@ -54,8 +81,15 @@ export default function AdminRegisterPage() {
   useEffect(() => {
     fetch(`/api/stations?type=${type}`)
       .then(r => r.json())
-      .then(d => { setStationsData(d); setSigungu(''); setStationId(''); setTimeSlot(''); });
-  }, [type]);
+      .then(d => {
+        setStationsData(d);
+        if (!initialized) {
+          setInitialized(true);
+        } else {
+          setSigungu(''); setStationId(''); setTimeSlot('');
+        }
+      });
+  }, [type]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sigunguList = stationsData?.sigunguList || [];
   const stations = stationsData?.stations.filter(s => !sigungu || s.sigungu === sigungu) || [];
@@ -131,6 +165,7 @@ export default function AdminRegisterPage() {
         {/* 투표소 선택 */}
         <div className="bg-white border rounded-xl p-4 space-y-3">
           <h2 className="text-sm font-bold text-gray-700">투표소 선택</h2>
+          <p className="text-xs text-gray-500">현재 투표소는 2025년 6월 대선 기준이며, 사전투표소는 5월 19일, 본투표소는 5월 24일 선관위에서 확정됩니다.</p>
           <div className="grid grid-cols-3 gap-2">
             {TYPE_OPTIONS.map(t => (
               <button key={t.value} type="button" onClick={() => setType(t.value)}
@@ -153,7 +188,7 @@ export default function AdminRegisterPage() {
           </div>
           {selectedStation && (
             <div className="grid grid-cols-4 gap-2">
-              {getTimeSlots(type).map(ts => (
+              {getTimeSlots(type).filter(ts => !isSlotFull(selectedStation, ts.value)).map(ts => (
                 <button key={ts.value} type="button" onClick={() => setTimeSlot(ts.value)}
                   className={`py-2 rounded-lg border-2 text-xs font-medium ${timeSlot === ts.value ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'}`}>
                   {ts.label}

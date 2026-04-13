@@ -259,6 +259,14 @@ export default function ApplyForm() {
       {state.step === 2 && loading && !stationsData && (
         <SigunguSelector sigunguList={[]} selected={null} onSelect={() => {}} loading />
       )}
+
+      {/* 문의 안내 */}
+      {state.step < 6 && (
+        <div className="mt-6 text-center text-xs text-gray-400 space-y-0.5">
+          <p>문의: 010-5960-5190 (문자만 가능, 전화 연결 시 신청 반려)</p>
+          <p>진주지역: 010-5168-2404</p>
+        </div>
+      )}
     </div>
   );
 }

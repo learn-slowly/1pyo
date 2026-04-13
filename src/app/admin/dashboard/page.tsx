@@ -116,7 +116,10 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
-      <h1 className="text-xl font-bold text-gray-900 mb-4">신청 현황</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-bold text-gray-900">신청 현황</h1>
+        <a href="/admin/vacancies" className="text-sm text-yellow-600 font-medium hover:text-yellow-700">빈자리 현황 →</a>
+      </div>
 
       {/* 통계 */}
       {stats && (

@@ -32,9 +32,10 @@ export default function Home() {
           </Link>
         </div>
 
-        <p className="text-xs text-gray-400">
-          제9회 전국동시지방선거 · 2026년 6월 3일
-        </p>
+        <div className="text-xs text-gray-400 space-y-1">
+          <p>문의: 010-5960-5190 (문자만 가능, 전화 연결 시 신청 반려)</p>
+          <p>진주지역: 010-5168-2404</p>
+        </div>
       </div>
     </main>
   );
