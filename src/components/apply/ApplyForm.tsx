@@ -1,6 +1,7 @@
 'use client';
 
 import { useReducer, useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type { FormState, ObservationType, Station, StationsResponse, ApplicationResponse } from '@/lib/types';
 import TypeSelector from './TypeSelector';
 import SigunguSelector from './SigunguSelector';
@@ -81,9 +82,20 @@ function isSlotFullForStation(station: Station, timeSlot: string): boolean {
 }
 
 export default function ApplyForm() {
+  const router = useRouter();
   const [state, dispatch] = useReducer(reducer, initialState);
   const [stationsData, setStationsData] = useState<StationsResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [guideChecked, setGuideChecked] = useState(false);
+
+  // 교육 이수 확인
+  useEffect(() => {
+    if (localStorage.getItem('guide_completed') !== 'true') {
+      router.replace('/guide');
+    } else {
+      setGuideChecked(true);
+    }
+  }, [router]);
 
   // 투표소 데이터 가져오기
   useEffect(() => {
@@ -147,6 +159,10 @@ export default function ApplyForm() {
   const lotteryMode = stationsData?.config.lottery_mode ?? false;
 
   const stepLabels = ['유형 선택', '지역 선택', '투표소 선택', '시간대 선택', '정보 입력'];
+
+  if (!guideChecked) {
+    return <div className="text-center py-12 text-gray-400">교육자료를 확인하는 중...</div>;
+  }
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
@@ -264,7 +280,7 @@ export default function ApplyForm() {
       {state.step < 6 && (
         <div className="mt-6 text-center text-xs text-gray-400 space-y-0.5">
           <p>문의: 010-5960-5190 (문자만 가능, 전화 연결 시 신청 반려)</p>
-          <p>진주지역: 010-5168-2404</p>
+          <p>진주지역: 010-5168-2404 (문자만 가능)</p>
         </div>
       )}
     </div>
