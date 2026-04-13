@@ -36,6 +36,10 @@ export default function Home() {
           <p>문의: 010-5960-5190 (문자만 가능, 전화 연결 시 신청 반려)</p>
           <p>진주지역: 010-5168-2404 (문자만 가능)</p>
         </div>
+
+        <Link href="/admin" className="text-xs text-gray-300 hover:text-gray-500 transition-colors">
+          관리자
+        </Link>
       </div>
     </main>
   );

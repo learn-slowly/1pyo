@@ -25,10 +25,10 @@ const SHEETS = [
 const TIME_SLOT_LABELS: Record<string, string> = {
   am: '오전',
   pm: '오후',
-  d1_am: '1일차 오전',
-  d1_pm: '1일차 오후',
-  d2_am: '2일차 오전',
-  d2_pm: '2일차 오후',
+  d1_am: '5/29 오전',
+  d1_pm: '5/29 오후',
+  d2_am: '5/30 오전',
+  d2_pm: '5/30 오후',
   all: '종일',
 };
 

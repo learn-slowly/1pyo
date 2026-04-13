@@ -1,5 +1,5 @@
 export const OBSERVATION_TYPES = {
-  early: { label: '사전투표 참관', description: '사전투표일 이틀간' },
+  early: { label: '사전투표 참관', description: '사전투표일 이틀간 (5/29 금, 5/30 토)' },
   polling: { label: '본투표 참관', description: '6월 3일 선거일 당일' },
   counting: { label: '개표 참관', description: '6월 3일 밤 개표' },
 } as const;
@@ -7,10 +7,10 @@ export const OBSERVATION_TYPES = {
 export const TIME_SLOT_LABELS: Record<string, string> = {
   am: '오전',
   pm: '오후',
-  d1_am: '1일차 오전',
-  d1_pm: '1일차 오후',
-  d2_am: '2일차 오전',
-  d2_pm: '2일차 오후',
+  d1_am: '5/29 오전',
+  d1_pm: '5/29 오후',
+  d2_am: '5/30 오전',
+  d2_pm: '5/30 오후',
   all: '전체',
 };
 

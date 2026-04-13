@@ -18,10 +18,10 @@ function getSlotInfo(station: Station): { label: string; count: number; max: num
       ];
     case 'early':
       return [
-        { label: '1일차 오전', count: station.d1_am_count, max: station.slot_max },
-        { label: '1일차 오후', count: station.d1_pm_count, max: station.slot_max },
-        { label: '2일차 오전', count: station.d2_am_count, max: station.slot_max },
-        { label: '2일차 오후', count: station.d2_pm_count, max: station.slot_max },
+        { label: '5/29 오전', count: station.d1_am_count, max: station.slot_max },
+        { label: '5/29 오후', count: station.d1_pm_count, max: station.slot_max },
+        { label: '5/30 오전', count: station.d2_am_count, max: station.slot_max },
+        { label: '5/30 오후', count: station.d2_pm_count, max: station.slot_max },
       ];
     case 'counting':
       return [

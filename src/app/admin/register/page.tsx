@@ -22,8 +22,8 @@ function getTimeSlots(type: ObservationType): { value: string; label: string }[]
   switch (type) {
     case 'polling': return [{ value: 'am', label: '오전' }, { value: 'pm', label: '오후' }];
     case 'early': return [
-      { value: 'd1_am', label: '1일차 오전' }, { value: 'd1_pm', label: '1일차 오후' },
-      { value: 'd2_am', label: '2일차 오전' }, { value: 'd2_pm', label: '2일차 오후' },
+      { value: 'd1_am', label: '5/29 오전' }, { value: 'd1_pm', label: '5/29 오후' },
+      { value: 'd2_am', label: '5/30 오전' }, { value: 'd2_pm', label: '5/30 오후' },
     ];
     case 'counting': return [{ value: 'all', label: '종일' }];
   }
