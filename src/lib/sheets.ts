@@ -3,6 +3,7 @@ import type {
   ObservationType,
   Station,
   ApplicationRequest,
+  MemberVerifyResponse,
   VoterCountReport,
   IncidentReport,
 } from './types';
@@ -165,6 +166,58 @@ export async function getSigunguList(type: ObservationType): Promise<string[]> {
   return [...new Set(stations.map(s => s.sigungu))].sort();
 }
 
+// === 당원명단 시트 이름 조회 ===
+async function getMemberSheetName(): Promise<string> {
+  const cached = getCached<string>('member_sheet_name');
+  if (cached) return cached;
+
+  const sheets = await getSheetsClient();
+  const spreadsheetId = getSpreadsheetId();
+  const meta = await sheets.spreadsheets.get({
+    spreadsheetId,
+    fields: 'sheets.properties.title',
+  });
+
+  const sheetNames = (meta.data.sheets || []).map(s => s.properties?.title || '');
+  // NFC 정규화해서 "당원명단"과 매칭
+  const target = '당원명단'.normalize('NFC');
+  const found = sheetNames.find(name => name.normalize('NFC') === target);
+  if (!found) throw new Error('당원명단 시트를 찾을 수 없습니다.');
+
+  setCache('member_sheet_name', found);
+  return found;
+}
+
+// === 당원 인증 ===
+export async function verifyMember(
+  name: string,
+  birthDate: string,
+): Promise<MemberVerifyResponse> {
+  if (useMock) return (await getMock()).verifyMember(name, birthDate);
+
+  const sheets = await getSheetsClient();
+  const spreadsheetId = getSpreadsheetId();
+  const sheetName = await getMemberSheetName();
+
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: `'${sheetName}'!B:D`, // B=이름, D=생년월일
+  });
+
+  const rows = res.data.values || [];
+  const normalizedBirth = birthDate.replace(/[^0-9]/g, '');
+
+  for (let i = 1; i < rows.length; i++) {
+    const rowName = (rows[i][0] || '').trim();
+    const rowBirth = (rows[i][2] || '').replace(/[^0-9]/g, '');
+    if (rowName === name.trim() && rowBirth === normalizedBirth) {
+      return { verified: true, message: '당원 인증이 완료되었습니다.' };
+    }
+  }
+
+  return { verified: false, message: '당원 명단에서 확인되지 않습니다.' };
+}
+
 // === 신청자 시트 이름 ===
 const APPLICANT_SHEETS: Record<string, string> = {
   polling: '본투표참관신청자',
@@ -289,6 +342,18 @@ export async function submitApplication(
   const phone2 = normalizedPhone.slice(3, 7);
   const phone3 = normalizedPhone.slice(7);
 
+  // 비고 생성 (당원 인증 정보 + 기존 notes)
+  let notes = options?.notes || '';
+  if (data.member_verification) {
+    const mv = data.member_verification;
+    if (mv.member_type === 'member') {
+      notes = notes ? `당원,${notes}` : '당원';
+    } else if (mv.member_type === 'acquaintance') {
+      const tag = `당원지인(${mv.referrer_name})`;
+      notes = notes ? `${tag},${notes}` : tag;
+    }
+  }
+
   // D~O열 (신청자 정보) + T~V열 (관리용)
   const applicantData = [
     data.name,            // D: 성명
@@ -302,7 +367,7 @@ export async function submitApplication(
     data.address_detail,  // L: 상세주소
     data.occupation,      // M: 직업
     data.account,         // N: 계좌
-    options?.notes || '', // O: 비고
+    notes,                // O: 비고
   ];
 
   if (targetRowIdx !== -1) {

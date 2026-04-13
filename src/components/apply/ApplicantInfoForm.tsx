@@ -40,6 +40,7 @@ interface Props {
   isSubmitting: boolean;
   submitError: string | null;
   onSubmit: (data: ApplicantData) => void;
+  prefillName?: string;
 }
 
 function formatPhone(value: string): string {
@@ -53,8 +54,8 @@ function formatBirthDate(value: string): string {
   return value.replace(/[^0-9]/g, '').slice(0, 8);
 }
 
-export default function ApplicantInfoForm({ station, timeSlot, isLottery, isSubmitting, submitError, onSubmit }: Props) {
-  const [name, setName] = useState('');
+export default function ApplicantInfoForm({ station, timeSlot, isLottery, isSubmitting, submitError, onSubmit, prefillName }: Props) {
+  const [name, setName] = useState(prefillName || '');
   const [phone, setPhone] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [gender, setGender] = useState<'1' | '2' | ''>('');

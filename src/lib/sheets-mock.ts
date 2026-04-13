@@ -6,6 +6,7 @@ import type {
   ObservationType,
   Station,
   ApplicationRequest,
+  MemberVerifyResponse,
   VoterCountReport,
   IncidentReport,
 } from './types';
@@ -43,6 +44,26 @@ const mockCountingStations: CountingStation[] = [
   { id: 'CS-002', sigungu: '김해시', station_name: '김해실내체육관', building_name: '김해체육관(1층)', address: '김해시 체육공원로 15', current_count: 6, max_count: 6 },
   { id: 'CS-003', sigungu: '창원시', station_name: '창원체육관', building_name: '창원컨벤션센터(3층)', address: '창원시 의창구 체육관로 5', current_count: 0, max_count: 6 },
 ];
+
+// === Mock 당원명단 ===
+const mockMembers = [
+  { name: '김정의', birth_date: '19850315' },
+  { name: '이평등', birth_date: '19900720' },
+  { name: '박연대', birth_date: '19780101' },
+];
+
+export async function verifyMember(
+  name: string,
+  birthDate: string,
+): Promise<MemberVerifyResponse> {
+  const normalizedBirth = birthDate.replace(/[^0-9]/g, '');
+  const found = mockMembers.some(
+    m => m.name === name.trim() && m.birth_date === normalizedBirth,
+  );
+  return found
+    ? { verified: true, message: '당원 인증이 완료되었습니다.' }
+    : { verified: false, message: '당원 명단에서 확인되지 않습니다.' };
+}
 
 // === Mock 신청자 데이터 (메모리) ===
 const mockApplications: Array<ApplicationRequest & { id: string; timestamp: string; status: string }> = [];

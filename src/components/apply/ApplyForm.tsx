@@ -2,11 +2,12 @@
 
 import { useReducer, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { FormState, ObservationType, Station, StationsResponse, ApplicationResponse } from '@/lib/types';
+import type { FormState, ObservationType, Station, StationsResponse, ApplicationResponse, MemberVerification } from '@/lib/types';
 import TypeSelector from './TypeSelector';
 import SigunguSelector from './SigunguSelector';
 import StationList from './StationList';
 import TimeSlotSelector from './TimeSlotSelector';
+import MemberVerificationForm from './MemberVerificationForm';
 import ApplicantInfoForm from './ApplicantInfoForm';
 import CompletionView from './CompletionView';
 
@@ -15,6 +16,7 @@ type Action =
   | { type: 'SELECT_SIGUNGU'; payload: string }
   | { type: 'SELECT_STATION'; payload: Station }
   | { type: 'SELECT_TIMESLOT'; payload: string }
+  | { type: 'SET_MEMBER_VERIFIED'; payload: { verification: MemberVerification; name?: string; birthDate?: string } }
   | { type: 'SET_SUBMITTING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'SET_RESULT'; payload: ApplicationResponse }
@@ -32,6 +34,8 @@ const initialState: FormState = {
   isSubmitting: false,
   error: null,
   result: null,
+  memberVerification: null,
+  memberVerified: false,
 };
 
 function reducer(state: FormState, action: Action): FormState {
@@ -43,7 +47,14 @@ function reducer(state: FormState, action: Action): FormState {
     case 'SELECT_STATION':
       return { ...state, step: 4, selectedStation: action.payload, timeSlot: null };
     case 'SELECT_TIMESLOT':
-      return { ...state, step: 5, timeSlot: action.payload };
+      return { ...state, step: 5, timeSlot: action.payload, memberVerified: false, memberVerification: null };
+    case 'SET_MEMBER_VERIFIED':
+      return {
+        ...state,
+        memberVerified: true,
+        memberVerification: action.payload.verification,
+        name: action.payload.name || state.name,
+      };
     case 'SET_SUBMITTING':
       return { ...state, isSubmitting: action.payload };
     case 'SET_ERROR':
@@ -132,6 +143,7 @@ export default function ApplyForm() {
           station_name: state.selectedStation.station_name,
           sigungu: state.sigungu,
           time_slot: state.timeSlot,
+          ...(state.memberVerification ? { member_verification: state.memberVerification } : {}),
         }),
       });
 
@@ -157,6 +169,8 @@ export default function ApplyForm() {
   }, [state.selectedStation, state.timeSlot, state.observationType, state.sigungu]);
 
   const lotteryMode = stationsData?.config.lottery_mode ?? false;
+  const isMembersOnly = stationsData?.config.mode === 'members_only';
+  const needsMemberVerification = isMembersOnly && !state.memberVerified;
 
   const stepLabels = ['유형 선택', '지역 선택', '투표소 선택', '시간대 선택', '정보 입력'];
 
@@ -250,7 +264,18 @@ export default function ApplyForm() {
         />
       )}
 
-      {state.step === 5 && state.selectedStation && state.timeSlot && (
+      {state.step === 5 && state.selectedStation && state.timeSlot && needsMemberVerification && (
+        <MemberVerificationForm
+          onVerified={(verification, verifiedName, verifiedBirthDate) =>
+            dispatch({
+              type: 'SET_MEMBER_VERIFIED',
+              payload: { verification, name: verifiedName, birthDate: verifiedBirthDate },
+            })
+          }
+        />
+      )}
+
+      {state.step === 5 && state.selectedStation && state.timeSlot && !needsMemberVerification && (
         <ApplicantInfoForm
           station={state.selectedStation}
           timeSlot={state.timeSlot}
@@ -258,6 +283,7 @@ export default function ApplyForm() {
           isSubmitting={state.isSubmitting}
           submitError={state.error}
           onSubmit={handleSubmit}
+          prefillName={state.memberVerification?.member_type === 'member' ? state.name : undefined}
         />
       )}
 

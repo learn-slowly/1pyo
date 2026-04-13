@@ -50,6 +50,26 @@ export type Station =
   | (EarlyStation & { type: 'early' })
   | (CountingStation & { type: 'counting' });
 
+// === 당원 인증 ===
+export type MemberType = 'member' | 'acquaintance'; // 당원 | 당원지인
+
+export interface MemberVerification {
+  member_type: MemberType;
+  // 당원지인인 경우 소개 당원 정보
+  referrer_name?: string;
+  referrer_birth_date?: string;
+}
+
+export interface MemberVerifyRequest {
+  name: string;
+  birth_date: string;
+}
+
+export interface MemberVerifyResponse {
+  verified: boolean;
+  message: string;
+}
+
 // === 신청 ===
 export interface ApplicationRequest {
   name: string;
@@ -66,6 +86,8 @@ export interface ApplicationRequest {
   station_name: string;
   sigungu: string;
   time_slot: string;
+  // 당원 인증 정보 (members_only 모드)
+  member_verification?: MemberVerification;
 }
 
 export interface ApplicationResponse {
@@ -127,4 +149,7 @@ export interface FormState {
   isSubmitting: boolean;
   error: string | null;
   result: ApplicationResponse | null;
+  // 당원 인증
+  memberVerification: MemberVerification | null;
+  memberVerified: boolean;
 }
