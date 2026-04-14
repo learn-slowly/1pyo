@@ -1,5 +1,6 @@
 import type {
   Config,
+  CandidateInfo,
   PollingStation,
   EarlyStation,
   CountingStation,
@@ -16,7 +17,22 @@ const mockConfig: Config = {
   mode: 'public',
   lottery_mode: false,
   sido: '경상남도',
+  region_name: '경남',
+  contacts: [
+    { label: '진주', number: '010-5168-2404' },
+    { label: '진주 외 경남 전역', number: '010-5960-5190' },
+  ],
+  contact_notice: '업무 폭주로 응대가 늦습니다. 불필요한 통화 시도시 신청 반려합니다.',
+  guide_intro: '6월 3일 지방선거, 경남에서 정의당에 투표할 수 있는 곳은 다음과 같습니다.',
+  guide_outro: '이 소중한 표가 제대로 세어지려면, 우리 눈이 현장에 있어야 합니다. 여러분은 정의당이 파견한, <strong>정의당의 한 표를 지키는 파수꾼</strong>입니다.',
 };
+
+// === Mock 후보정보 ===
+const mockCandidates: CandidateInfo[] = [
+  { title: '경남도의회 비례대표', description: '경남 전역 — 경남 어디에 살든, 도의회 비례대표에서 정의당을 선택할 수 있습니다.' },
+  { title: '창원시의회 비례대표', description: '창원시 전역 — 창원시 유권자라면 시의회 비례대표에서도 정의당에 투표할 수 있습니다.' },
+  { title: '진주시의원 라선거구 — 김용국 후보', description: '진주시 라선거구에서는 정의당 김용국 후보에게 직접 투표할 수 있습니다.', detail_label: '라선거구 해당 지역', detail_content: '천전동(망경, 강남, 주약, 칠암) · 가호동(가좌, 호탄) · 성북동(본성, 남성, 인사, 중안, 봉곡, 계동)' },
+];
 
 // === Mock 본투표소 ===
 const mockPollingStations: PollingStation[] = [
@@ -77,6 +93,10 @@ function addTypeToStation<T extends { type: ObservationType }>(stations: Omit<T,
 // === 외부 함수 ===
 export async function getConfig(): Promise<Config> {
   return { ...mockConfig };
+}
+
+export async function getCandidateInfo(): Promise<CandidateInfo[]> {
+  return [...mockCandidates];
 }
 
 export async function getStations(type: ObservationType, sigungu?: string): Promise<Station[]> {

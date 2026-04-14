@@ -98,11 +98,28 @@ export interface ApplicationResponse {
 }
 
 // === 설정 ===
+export interface ContactInfo {
+  label: string;
+  number: string;
+}
+
+export interface CandidateInfo {
+  title: string;
+  description: string;
+  detail_label?: string;
+  detail_content?: string;
+}
+
 export interface Config {
   mode: 'members_only' | 'public';
   password?: string;
   lottery_mode: boolean;
   sido: string;
+  region_name: string;
+  contacts: ContactInfo[];
+  contact_notice: string;
+  guide_intro: string;
+  guide_outro: string;
 }
 
 // === 참관 보고 ===

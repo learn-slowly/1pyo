@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { getConfig } from "@/lib/sheets";
 
-export default function Home() {
+export default async function Home() {
+  const config = await getConfig();
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4">
       <div className="max-w-md w-full text-center space-y-8">
@@ -33,9 +36,12 @@ export default function Home() {
         </div>
 
         <div className="text-xs text-gray-400 space-y-1">
-          <p>진주: 010-5168-2404 (문자만 가능)</p>
-          <p>진주 외 경남 전역: 010-5960-5190 (문자만 가능)</p>
-          <p className="mt-1">* 업무 폭주로 응대가 늦습니다. 불필요한 통화 시도시 신청 반려합니다.</p>
+          {config.contacts.map((c, i) => (
+            <p key={i}>{c.label}: {c.number} (문자만 가능)</p>
+          ))}
+          {config.contact_notice && (
+            <p className="mt-1">* {config.contact_notice}</p>
+          )}
         </div>
 
         <Link href="/admin" className="text-xs text-gray-300 hover:text-gray-500 transition-colors">

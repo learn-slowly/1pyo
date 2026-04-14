@@ -303,11 +303,14 @@ export default function ApplyForm() {
       )}
 
       {/* 문의 안내 */}
-      {state.step < 6 && (
+      {state.step < 6 && stationsData?.config && (
         <div className="mt-6 text-center text-xs text-gray-400 space-y-0.5">
-          <p>진주: 010-5168-2404 (문자만 가능)</p>
-          <p>진주 외 경남 전역: 010-5960-5190 (문자만 가능)</p>
-          <p className="mt-1">* 업무 폭주로 응대가 늦습니다. 불필요한 통화 시도시 신청 반려합니다.</p>
+          {stationsData.config.contacts.map((c, i) => (
+            <p key={i}>{c.label}: {c.number} (문자만 가능)</p>
+          ))}
+          {stationsData.config.contact_notice && (
+            <p className="mt-1">* {stationsData.config.contact_notice}</p>
+          )}
         </div>
       )}
     </div>

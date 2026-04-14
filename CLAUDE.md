@@ -34,6 +34,13 @@ When GOOGLE_PRIVATE_KEY is not set, mock data is used automatically.
 See prd.md Section 5 for full Google Sheets schema.
 Key sheets: 설정, 본투표소, 사전투표소, 개표소, 신청자
 
+## Regional Config (하드코딩 제거 완료)
+- 지역별 콘텐츠(연락처, 후보정보, 가이드 텍스트)는 Google Sheets에서 관리
+- 설정 시트 키: `region_name`, `contact_*`, `guide_intro`, `guide_outro`
+- 후보정보 시트 탭: title, description, detail_label, detail_content
+- `/api/config` 엔드포인트로 클라이언트에 전달
+- 전국 확장 계획: `docs/multi-region-plan.md` 참고
+
 ## Korean Terminology
 - 참관인 = election observer
 - 사전투표 = early voting (type: 'early')

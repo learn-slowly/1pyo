@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import type { Config, CandidateInfo } from '@/lib/types';
 
 // 퀴즈 데이터
 const quizzes = [
@@ -82,32 +83,31 @@ const TOTAL_STEPS = STEP_TITLES.length;
 
 // === 각 섹션 컴포넌트 ===
 
-function Step1() {
+function Step1({ candidates, config }: { candidates: CandidateInfo[]; config: Config | null }) {
   return (
     <>
-      <p className="text-sm text-gray-600 mb-4">6월 3일 지방선거, 경남에서 정의당에 투표할 수 있는 곳은 다음과 같습니다.</p>
+      {config?.guide_intro && (
+        <p className="text-sm text-gray-600 mb-4">{config.guide_intro}</p>
+      )}
       <div className="space-y-3">
-        <div className="bg-white border rounded-xl p-4">
-          <p className="font-semibold text-gray-900">경남도의회 비례대표</p>
-          <p className="text-sm text-gray-500 mt-1">경남 전역 — 경남 어디에 살든, 도의회 비례대표에서 정의당을 선택할 수 있습니다.</p>
-        </div>
-        <div className="bg-white border rounded-xl p-4">
-          <p className="font-semibold text-gray-900">창원시의회 비례대표</p>
-          <p className="text-sm text-gray-500 mt-1">창원시 전역 — 창원시 유권자라면 시의회 비례대표에서도 정의당에 투표할 수 있습니다.</p>
-        </div>
-        <div className="bg-white border rounded-xl p-4">
-          <p className="font-semibold text-gray-900">진주시의원 라선거구 — 김용국 후보</p>
-          <p className="text-sm text-gray-500 mt-1">진주시 라선거구에서는 정의당 김용국 후보에게 직접 투표할 수 있습니다.</p>
-          <div className="mt-3 bg-gray-50 rounded-lg p-3">
-            <p className="text-xs font-medium text-gray-700 mb-1">라선거구 해당 지역</p>
-            <p className="text-xs text-gray-500">천전동(망경, 강남, 주약, 칠암) · 가호동(가좌, 호탄) · 성북동(본성, 남성, 인사, 중안, 봉곡, 계동)</p>
+        {candidates.map((c, i) => (
+          <div key={i} className="bg-white border rounded-xl p-4">
+            <p className="font-semibold text-gray-900">{c.title}</p>
+            <p className="text-sm text-gray-500 mt-1">{c.description}</p>
+            {c.detail_label && c.detail_content && (
+              <div className="mt-3 bg-gray-50 rounded-lg p-3">
+                <p className="text-xs font-medium text-gray-700 mb-1">{c.detail_label}</p>
+                <p className="text-xs text-gray-500">{c.detail_content}</p>
+              </div>
+            )}
           </div>
-        </div>
+        ))}
       </div>
-      <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-gray-700">
-        이 소중한 표가 제대로 세어지려면, 우리 눈이 현장에 있어야 합니다.
-        여러분은 정의당이 파견한, <strong>정의당의 한 표를 지키는 파수꾼</strong>입니다.
-      </div>
+      {config?.guide_outro && (
+        <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-gray-700"
+          dangerouslySetInnerHTML={{ __html: config.guide_outro }}
+        />
+      )}
     </>
   );
 }
@@ -281,7 +281,7 @@ function Step5() {
   );
 }
 
-function Step6() {
+function Step6({ config }: { config: Config | null }) {
   return (
     <>
       <h3 className="text-sm font-bold text-gray-700 mb-2">수당</h3>
@@ -317,9 +317,12 @@ function Step6() {
 
       <h3 className="text-sm font-bold text-gray-700 mb-2">긴급 상황 연락처</h3>
       <div className="bg-white border rounded-xl p-4 text-sm text-gray-700 space-y-1 mb-4">
-        <p>진주: <strong>010-5168-2404</strong> (문자만 가능)</p>
-        <p>진주 외 경남 전역: <strong>010-5960-5190</strong> (문자만 가능)</p>
-        <p className="text-xs text-red-400 mt-2">* 업무 폭주로 응대가 늦습니다. 불필요한 통화 시도시 신청 반려합니다.</p>
+        {config?.contacts.map((c, i) => (
+          <p key={i}>{c.label}: <strong>{c.number}</strong> (문자만 가능)</p>
+        ))}
+        {config?.contact_notice && (
+          <p className="text-xs text-red-400 mt-2">* {config.contact_notice}</p>
+        )}
       </div>
 
       <h3 className="text-sm font-bold text-gray-700 mb-2">관련 법령</h3>
@@ -476,13 +479,24 @@ function QuizStep({ onPass }: { onPass: () => void }) {
 
 // === 메인 페이지 ===
 
-const STEP_COMPONENTS = [Step1, () => null, Step3, Step4, Step5, Step6];
-
 export default function GuidePage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [quizPassed, setQuizPassed] = useState(false);
   const [disqualifyConfirmed, setDisqualifyConfirmed] = useState(false);
+  const [config, setConfig] = useState<Config | null>(null);
+  const [candidates, setCandidates] = useState<CandidateInfo[]>([]);
+
+  // 설정 + 후보정보 로드
+  useEffect(() => {
+    fetch('/api/config')
+      .then(res => res.json())
+      .then(data => {
+        setConfig(data.config);
+        setCandidates(data.candidates);
+      })
+      .catch(console.error);
+  }, []);
 
   // 이미 이수한 경우
   useEffect(() => {
@@ -492,7 +506,6 @@ export default function GuidePage() {
   }, []);
 
   const isQuizStep = step === TOTAL_STEPS - 1;
-  const StepContent = !isQuizStep ? STEP_COMPONENTS[step] : null;
 
   const handleQuizPass = () => {
     localStorage.setItem('guide_completed', 'true');
@@ -554,11 +567,12 @@ export default function GuidePage() {
       </h2>
 
       {/* 콘텐츠 */}
-      {step === 1 ? (
-        <Step2 disqualifyConfirmed={disqualifyConfirmed} onDisqualifyChange={setDisqualifyConfirmed} />
-      ) : StepContent ? (
-        <StepContent />
-      ) : null}
+      {step === 0 && <Step1 candidates={candidates} config={config} />}
+      {step === 1 && <Step2 disqualifyConfirmed={disqualifyConfirmed} onDisqualifyChange={setDisqualifyConfirmed} />}
+      {step === 2 && <Step3 />}
+      {step === 3 && <Step4 />}
+      {step === 4 && <Step5 />}
+      {step === 5 && <Step6 config={config} />}
       {isQuizStep && <QuizStep onPass={handleQuizPass} />}
 
       {/* 네비게이션 */}
@@ -590,11 +604,16 @@ export default function GuidePage() {
       </div>
 
       {/* 문의 안내 */}
-      <div className="text-center text-xs text-gray-400 space-y-0.5 mt-8 mb-4">
-        <p>진주: 010-5168-2404 (문자만 가능)</p>
-        <p>진주 외 경남 전역: 010-5960-5190 (문자만 가능)</p>
-        <p className="mt-1">* 업무 폭주로 응대가 늦습니다. 불필요한 통화 시도시 신청 반려합니다.</p>
-      </div>
+      {config && (
+        <div className="text-center text-xs text-gray-400 space-y-0.5 mt-8 mb-4">
+          {config.contacts.map((c, i) => (
+            <p key={i}>{c.label}: {c.number} (문자만 가능)</p>
+          ))}
+          {config.contact_notice && (
+            <p className="mt-1">* {config.contact_notice}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

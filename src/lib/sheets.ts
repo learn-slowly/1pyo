@@ -1,5 +1,7 @@
 import type {
   Config,
+  ContactInfo,
+  CandidateInfo,
   ObservationType,
   Station,
   ApplicationRequest,
@@ -65,15 +67,56 @@ export async function getConfig(): Promise<Config> {
     if (key) configMap[key] = value || '';
   }
 
+  // 연락처 파싱 (contact_1_label/contact_1_number, contact_2_label/contact_2_number, ...)
+  const contacts: ContactInfo[] = [];
+  for (let i = 1; ; i++) {
+    const label = configMap[`contact_${i}_label`];
+    const number = configMap[`contact_${i}_number`];
+    if (!label || !number) break;
+    contacts.push({ label, number });
+  }
+
   const config: Config = {
     mode: (configMap.mode as Config['mode']) || 'public',
     password: configMap.password,
     lottery_mode: configMap.lottery_mode === 'on',
     sido: configMap.sido || '',
+    region_name: configMap.region_name || '',
+    contacts,
+    contact_notice: configMap.contact_notice || '',
+    guide_intro: configMap.guide_intro || '',
+    guide_outro: configMap.guide_outro || '',
   };
 
   setCache('config', config);
   return config;
+}
+
+// === 후보정보 ===
+export async function getCandidateInfo(): Promise<CandidateInfo[]> {
+  if (useMock) return (await getMock()).getCandidateInfo();
+
+  const cached = getCached<CandidateInfo[]>('candidates');
+  if (cached) return cached;
+
+  const sheets = await getSheetsClient();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: getSpreadsheetId(),
+    range: '후보정보!A2:D',
+  });
+
+  const rows = res.data.values || [];
+  const candidates: CandidateInfo[] = rows
+    .filter(row => row[0])
+    .map(row => ({
+      title: row[0] || '',
+      description: row[1] || '',
+      detail_label: row[2] || undefined,
+      detail_content: row[3] || undefined,
+    }));
+
+  setCache('candidates', candidates);
+  return candidates;
 }
 
 // === Stations ===
