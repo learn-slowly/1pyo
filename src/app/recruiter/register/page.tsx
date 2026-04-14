@@ -281,7 +281,7 @@ export default function RecruiterRegisterPage() {
 
                     {selectedStation && (
                       <>
-                        <p className="text-xs text-gray-500 px-1">{selectedStation.address}</p>
+                        <p className="text-xs text-gray-500 px-1">{selectedStation.building_name ? `${selectedStation.building_name}(${selectedStation.address})` : selectedStation.address}</p>
                         <div className="flex gap-2">
                           {config.timeSlots
                             .filter(ts => !isSlotFull(selectedStation, ts.value))
