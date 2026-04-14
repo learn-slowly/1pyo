@@ -176,6 +176,7 @@ export default function DashboardPage() {
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">시군구</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">투표소</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">시간대</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">비고</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">상태</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">관리</th>
               </tr>
@@ -189,6 +190,7 @@ export default function DashboardPage() {
                   <td className="px-3 py-2 whitespace-nowrap text-gray-700">{app.sigungu}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-gray-700">{app.stationName}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-gray-700">{app.timeSlotLabel}</td>
+                  <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{app.notes}</td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[app.status] || 'bg-gray-100 text-gray-600'}`}>
                       {STATUS_LABELS[app.status] || app.status}

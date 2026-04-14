@@ -591,6 +591,31 @@ export async function submitIncidentReport(
   return { success: true, message: '특이사항이 보고되었습니다.' };
 }
 
+// === 모집책 ===
+export async function getRecruiters(): Promise<{ name: string; code: string }[]> {
+  if (useMock) return [{ name: '테스트모집책', code: '1234' }];
+
+  const cached = getCached<{ name: string; code: string }[]>('recruiters');
+  if (cached) return cached;
+
+  const sheets = await getSheetsClient();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: getSpreadsheetId(),
+    range: '모집책!A:B',
+  });
+
+  const rows = res.data.values || [];
+  const recruiters: { name: string; code: string }[] = [];
+  for (let i = 1; i < rows.length; i++) {
+    const name = (rows[i][0] || '').trim();
+    const code = (rows[i][1] || '').trim();
+    if (name && code) recruiters.push({ name, code });
+  }
+
+  setCache('recruiters', recruiters);
+  return recruiters;
+}
+
 // === 블랙리스트 ===
 export async function addToBlacklist(phone: string, reason: string = ''): Promise<{ success: boolean; message: string }> {
   if (useMock) {

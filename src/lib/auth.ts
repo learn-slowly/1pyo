@@ -32,3 +32,15 @@ export function verifyAdminToken(token: string): boolean {
   const payload = verify(token);
   return payload?.role === 'admin';
 }
+
+export function createRecruiterToken(recruiterName: string): string {
+  return sign({ role: 'recruiter', recruiter_name: recruiterName, iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 8 * 3600 });
+}
+
+export function verifyRecruiterToken(token: string): { valid: boolean; recruiterName: string } {
+  const payload = verify(token);
+  if (payload?.role === 'recruiter' && payload.recruiter_name) {
+    return { valid: true, recruiterName: payload.recruiter_name as string };
+  }
+  return { valid: false, recruiterName: '' };
+}

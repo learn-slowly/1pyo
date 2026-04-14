@@ -1,34 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+function verifyJwtPayload(token: string, expectedRole: string): boolean {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const payload = JSON.parse(atob(parts[1]));
+    if (!payload.exp || payload.exp < Date.now() / 1000) return false;
+    if (payload.role !== expectedRole) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // /admin 로그인 페이지와 로그인 API는 보호하지 않음
-  if (pathname === '/admin' || pathname === '/api/admin/login') {
+  // Admin 경로
+  if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
+    if (pathname === '/admin' || pathname === '/api/admin/login') {
+      return NextResponse.next();
+    }
+    const token = request.cookies.get('admin_token')?.value;
+    if (!token || !verifyJwtPayload(token, 'admin')) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ success: false, message: '인증이 필요합니다.' }, { status: 401 });
+      }
+      const response = NextResponse.redirect(new URL('/admin', request.url));
+      response.cookies.delete('admin_token');
+      return response;
+    }
     return NextResponse.next();
   }
 
-  const token = request.cookies.get('admin_token')?.value;
-  if (!token) {
-    return NextResponse.redirect(new URL('/admin', request.url));
-  }
-
-  // JWT 검증 (middleware는 edge runtime이라 crypto 대신 간단 검증)
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) throw new Error();
-    const payload = JSON.parse(atob(parts[1]));
-    if (!payload.exp || payload.exp < Date.now() / 1000) throw new Error();
-    if (payload.role !== 'admin') throw new Error();
-  } catch {
-    const response = NextResponse.redirect(new URL('/admin', request.url));
-    response.cookies.delete('admin_token');
-    return response;
+  // Recruiter 경로
+  if (pathname.startsWith('/recruiter') || pathname.startsWith('/api/recruiter')) {
+    if (pathname === '/recruiter' || pathname === '/api/recruiter/login') {
+      return NextResponse.next();
+    }
+    const token = request.cookies.get('recruiter_token')?.value;
+    if (!token || !verifyJwtPayload(token, 'recruiter')) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ success: false, message: '인증이 필요합니다.' }, { status: 401 });
+      }
+      const response = NextResponse.redirect(new URL('/recruiter', request.url));
+      response.cookies.delete('recruiter_token');
+      return response;
+    }
+    return NextResponse.next();
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/admin/:path+', '/api/admin/:path+'],
+  matcher: ['/admin/:path+', '/api/admin/:path+', '/recruiter/:path+', '/api/recruiter/:path+'],
 };
