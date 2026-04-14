@@ -136,8 +136,15 @@ export async function POST(request: NextRequest) {
         const occupation = row[12] || '';
         const account = row[13] || '';
 
+        // 사전투표는 1일차/2일차 구분
+        let typeLabel = sheet.type;
+        if (sheet.typeKey === 'early') {
+          if (timeSlot === 'd1_am' || timeSlot === 'd1_pm') typeLabel = '사전투표 참관 (1일차, 5/29 금)';
+          else if (timeSlot === 'd2_am' || timeSlot === 'd2_pm') typeLabel = '사전투표 참관 (2일차, 5/30 토)';
+        }
+
         results.push({
-          type: sheet.type,
+          type: typeLabel,
           stationName,
           buildingName: stationInfo?.buildingName || '',
           stationAddress: stationInfo?.address || '',
