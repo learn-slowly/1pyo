@@ -35,6 +35,8 @@ const TIME_SLOT_LABELS: Record<string, string> = {
 interface ApplicationResult {
   type: string;
   stationName: string;
+  buildingName: string;
+  stationAddress: string;
   sigungu: string;
   timeSlot: string;
   timeSlotLabel: string;
@@ -67,15 +69,46 @@ export async function POST(request: NextRequest) {
 
     const results: ApplicationResult[] = [];
 
-    // 3개 신청자 시트 병렬 조회
-    const responses = await Promise.all(
-      SHEETS.map(s =>
-        sheets.spreadsheets.values.get({
-          spreadsheetId,
-          range: `${s.name}!A:V`,
-        }).then(res => ({ sheet: s, rows: res.data.values || [] }))
-      )
-    );
+    const STATION_SHEETS = [
+      { name: '본투표소', type: 'polling' },
+      { name: '사전투표소', type: 'early' },
+      { name: '개표소', type: 'counting' },
+    ];
+
+    // 신청자 시트 + 투표소 시트 병렬 조회
+    const [responses, stationResponses] = await Promise.all([
+      Promise.all(
+        SHEETS.map(s =>
+          sheets.spreadsheets.values.get({ spreadsheetId, range: `${s.name}!A:V` })
+            .then(res => ({ sheet: s, rows: res.data.values || [] }))
+        )
+      ),
+      Promise.all(
+        STATION_SHEETS.map(s =>
+          sheets.spreadsheets.values.get({ spreadsheetId, range: `${s.name}!A:Z` })
+            .then(res => ({ type: s.type, rows: res.data.values || [] }))
+        )
+      ),
+    ]);
+
+    // 투표소 ID → {building_name, address} 매핑
+    const stationInfoMap = new Map<string, { buildingName: string; address: string }>();
+    for (const { rows: sRows } of stationResponses) {
+      if (sRows.length < 2) continue;
+      const headers = sRows[0];
+      const idIdx = headers.indexOf('id');
+      const bnIdx = headers.indexOf('building_name');
+      const addrIdx = headers.indexOf('address');
+      for (let i = 1; i < sRows.length; i++) {
+        const id = sRows[i][idIdx] || '';
+        if (id) {
+          stationInfoMap.set(id, {
+            buildingName: (bnIdx !== -1 ? sRows[i][bnIdx] : '') || '',
+            address: (addrIdx !== -1 ? sRows[i][addrIdx] : '') || '',
+          });
+        }
+      }
+    }
 
     for (const { sheet, rows } of responses) {
       for (let i = 1; i < rows.length; i++) {
@@ -87,9 +120,11 @@ export async function POST(request: NextRequest) {
         const rowPhone = `${row[6] || ''}${row[7] || ''}${row[8] || ''}`.replace(/[^0-9]/g, '');
         if (rowPhone !== normalizedPhone || rowName !== name.trim()) continue;
 
+        const stationId = row[15] || '';      // P열
         const timeSlot = row[16] || '';       // Q열
         const stationName = row[17] || '';    // R열
         const sigungu = row[18] || '';        // S열
+        const stationInfo = stationInfoMap.get(stationId);
         const applicationId = row[19] || '';  // T열
         const timestamp = row[20] || '';      // U열
         const status = row[21] || 'applied';  // V열
@@ -104,6 +139,8 @@ export async function POST(request: NextRequest) {
         results.push({
           type: sheet.type,
           stationName,
+          buildingName: stationInfo?.buildingName || '',
+          stationAddress: stationInfo?.address || '',
           sigungu,
           timeSlot,
           timeSlotLabel: TIME_SLOT_LABELS[timeSlot] || timeSlot,

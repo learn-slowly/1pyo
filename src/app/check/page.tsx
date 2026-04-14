@@ -7,6 +7,8 @@ import Link from 'next/link';
 interface ApplicationResult {
   type: string;
   stationName: string;
+  buildingName: string;
+  stationAddress: string;
   sigungu: string;
   timeSlotLabel: string;
   status: string;
@@ -178,6 +180,14 @@ function CheckContent() {
                     <span className="text-gray-500">투표소</span>
                     <span className="text-gray-900">{r.stationName}</span>
                   </div>
+                  {(r.buildingName || r.stationAddress) && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">장소</span>
+                      <span className="text-gray-900 text-right max-w-[60%]">
+                        {r.buildingName ? `${r.buildingName}(${r.stationAddress})` : r.stationAddress}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-gray-500">지역</span>
                     <span className="text-gray-900">{r.sigungu}</span>
