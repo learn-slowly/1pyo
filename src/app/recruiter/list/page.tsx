@@ -3,12 +3,15 @@
 import { useState, useEffect } from 'react';
 
 interface Applicant {
+  rowIndex: number;
+  sheetName: string;
   type: string;
   typeLabel: string;
   name: string;
   phone: string;
   birthDate: string;
   gender: string;
+  stationId: string;
   sigungu: string;
   stationName: string;
   timeSlot: string;
@@ -41,8 +44,9 @@ export default function RecruiterListPage() {
   const [recruiterName, setRecruiterName] = useState('');
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchData = () => {
     setLoading(true);
     fetch('/api/recruiter/applicants')
       .then(r => r.json())
@@ -54,7 +58,32 @@ export default function RecruiterListPage() {
         }
       })
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const handleDelete = async (app: Applicant) => {
+    if (!confirm(`${app.name}님의 ${app.typeLabel} 신청을 삭제하시겠습니까?`)) return;
+    const key = `${app.sheetName}-${app.rowIndex}`;
+    setDeleteLoading(key);
+    try {
+      const res = await fetch('/api/recruiter/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sheetName: app.sheetName,
+          rowIndex: app.rowIndex,
+          type: app.type,
+          stationId: app.stationId,
+          timeSlot: app.timeSlot,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) fetchData();
+      else alert(data.message);
+    } catch { alert('삭제 중 오류가 발생했습니다.'); }
+    finally { setDeleteLoading(null); }
+  };
 
   const filtered = filterType ? applicants.filter(a => a.type === filterType) : applicants;
 
@@ -130,11 +159,12 @@ export default function RecruiterListPage() {
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">시간대</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">상태</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">신청일</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">관리</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((app, idx) => (
-                <tr key={idx} className="border-b last:border-0 hover:bg-gray-50">
+              {filtered.map((app) => (
+                <tr key={`${app.sheetName}-${app.rowIndex}`} className="border-b last:border-0 hover:bg-gray-50">
                   <td className="px-3 py-2 whitespace-nowrap text-gray-700">{app.typeLabel}</td>
                   <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-900">{app.name}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-gray-700">{app.phone}</td>
@@ -148,6 +178,13 @@ export default function RecruiterListPage() {
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-gray-500 text-xs">
                     {app.timestamp ? new Date(app.timestamp).toLocaleDateString('ko-KR') : ''}
+                  </td>
+                  <td className="px-3 py-2 whitespace-nowrap">
+                    <button
+                      onClick={() => handleDelete(app)}
+                      disabled={deleteLoading === `${app.sheetName}-${app.rowIndex}`}
+                      className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 disabled:opacity-50"
+                    >삭제</button>
                   </td>
                 </tr>
               ))}

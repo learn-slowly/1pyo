@@ -75,6 +75,7 @@ export async function GET(request: NextRequest) {
           address: [row[10], row[11]].filter(Boolean).join(' '),
           occupation: row[12] || '',
           account: row[13] || '',
+          stationId: row[15] || '',
           stationName: row[17] || '',
           sigungu: row[18] || '',
           timeSlot,
