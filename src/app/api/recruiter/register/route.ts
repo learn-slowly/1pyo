@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
     const result = await submitApplication(parsed.data, {
       skipBlacklist: true,
       notes: `모집:${recruiterName}`,
+      recruiter: recruiterName,
     });
     return NextResponse.json(result);
   } catch (error) {

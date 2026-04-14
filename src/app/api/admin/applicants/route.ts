@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     const responses = await Promise.all(
       sheetsToQuery.map(s =>
-        sheets.spreadsheets.values.get({ spreadsheetId, range: `${s.name}!A:V` })
+        sheets.spreadsheets.values.get({ spreadsheetId, range: `${s.name}!A:W` })
           .then(res => ({ sheet: s, rows: res.data.values || [] }))
       )
     );
@@ -93,6 +93,7 @@ export async function GET(request: NextRequest) {
             timestamp,
             status: status || 'applied',
             notes: row[14] || '',
+            recruiter: row[22] || '',
           });
         }
         stats.totalSlots++;
@@ -159,12 +160,12 @@ export async function DELETE(request: NextRequest) {
       requestBody: { values: [['', '', '', '', '', '', '', '', '', '', '', '']] },
     });
 
-    // T~V열 (관리용) 클리어
+    // T~W열 (관리용) 클리어
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: `${sheetName}!T${rowIndex}:V${rowIndex}`,
+      range: `${sheetName}!T${rowIndex}:W${rowIndex}`,
       valueInputOption: 'RAW',
-      requestBody: { values: [['', '', '']] },
+      requestBody: { values: [['', '', '', '']] },
     });
 
     // 좌석 카운트 감소

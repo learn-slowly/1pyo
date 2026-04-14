@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     const responses = await Promise.all(
       SHEETS.map(s =>
-        sheets.spreadsheets.values.get({ spreadsheetId, range: `${s.name}!A:V` })
+        sheets.spreadsheets.values.get({ spreadsheetId, range: `${s.name}!A:W` })
           .then(res => ({ sheet: s, rows: res.data.values || [] }))
       )
     );
@@ -54,9 +54,11 @@ export async function GET(request: NextRequest) {
       for (let i = 1; i < sheetRows.length; i++) {
         const row = sheetRows[i];
         const name = (row[3] || '').trim();
+        const recruiterCol = (row[22] || '').trim();
         const notes = (row[14] || '').trim();
 
-        if (!name || !notes.includes(notesPrefix)) continue;
+        if (!name) continue;
+        if (recruiterCol !== recruiterName && !notes.includes(notesPrefix)) continue;
 
         const phone = [row[6], row[7], row[8]].filter(Boolean).join('-');
         const timeSlot = row[16] || '';

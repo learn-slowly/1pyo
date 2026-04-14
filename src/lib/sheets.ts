@@ -279,7 +279,7 @@ function getDayGroup(timeSlot: string): string {
 // === Applications ===
 export async function submitApplication(
   data: ApplicationRequest,
-  options?: { skipBlacklist?: boolean; notes?: string },
+  options?: { skipBlacklist?: boolean; notes?: string; recruiter?: string },
 ): Promise<{ success: boolean; id: string; status: string; message: string }> {
   if (useMock) return (await getMock()).submitApplication(data);
 
@@ -397,7 +397,13 @@ export async function submitApplication(
     }
   }
 
-  // D~O열 (신청자 정보) + T~V열 (관리용)
+  // W열: 모집책 또는 추천 당원 이름
+  let referrerCol = options?.recruiter || '';
+  if (!referrerCol && data.member_verification?.member_type === 'acquaintance' && data.member_verification.referrer_name) {
+    referrerCol = data.member_verification.referrer_name;
+  }
+
+  // D~O열 (신청자 정보) + T~W열 (관리용)
   const applicantData = [
     data.name,            // D: 성명
     "'" + data.birth_date,// E: 생년월일 (텍스트)
@@ -422,12 +428,12 @@ export async function submitApplication(
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: [applicantData] },
     });
-    // T~V열 (신청ID, timestamp, status)
+    // T~W열 (신청ID, timestamp, status, 모집책/추천인)
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: `${applicantSheet}!T${rowNum}:V${rowNum}`,
+      range: `${applicantSheet}!T${rowNum}:W${rowNum}`,
       valueInputOption: 'USER_ENTERED',
-      requestBody: { values: [[id, new Date().toISOString(), status]] },
+      requestBody: { values: [[id, new Date().toISOString(), status, referrerCol]] },
     });
   } else {
     // 추첨: 맨 아래에 새 행 추가
@@ -437,14 +443,14 @@ export async function submitApplication(
 
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: `${applicantSheet}!A:V`,
+      range: `${applicantSheet}!A:W`,
       valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: [[
           '', '', timeCode,
           ...applicantData,
           data.station_id, data.time_slot, data.station_name, data.sigungu,
-          id, new Date().toISOString(), status,
+          id, new Date().toISOString(), status, referrerCol,
         ]],
       },
     });
