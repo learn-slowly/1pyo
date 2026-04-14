@@ -3,17 +3,23 @@ import { verifyRecruiterToken } from '@/lib/auth';
 import * as XLSX from 'xlsx';
 
 const SHEETS = [
-  { name: '본투표참관신청자', typeLabel: '본투표' },
-  { name: '사전투표참관신청자', typeLabel: '사전투표' },
-  { name: '개표참관신청자', typeLabel: '개표' },
+  { name: '사전투표참관신청자', type: 'early' },
+  { name: '본투표참관신청자', type: 'polling' },
+  { name: '개표참관신청자', type: 'counting' },
 ];
 
-const TIME_SLOT_LABELS: Record<string, string> = {
-  am: '오전', pm: '오후',
-  d1_am: '5/29 오전', d1_pm: '5/29 오후',
-  d2_am: '5/30 오전', d2_pm: '5/30 오후',
-  all: '종일',
+// time_slot → 엑셀 열 매핑
+const SLOT_COL: Record<string, string> = {
+  d1_am: '5/29(금) 오전',
+  d1_pm: '5/29(금) 오후',
+  d2_am: '5/30(토) 오전',
+  d2_pm: '5/30(토) 오후',
+  am: '본투표 오전',
+  pm: '본투표 오후',
+  all: '개표',
 };
+
+const COL_ORDER = ['5/29(금) 오전', '5/29(금) 오후', '5/30(토) 오전', '5/30(토) 오후', '본투표 오전', '본투표 오후', '개표'];
 
 async function getSheetsClient() {
   const { google } = await import('googleapis');
@@ -23,6 +29,17 @@ async function getSheetsClient() {
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
   return google.sheets({ version: 'v4', auth });
+}
+
+interface PersonRow {
+  name: string;
+  birthDate: string;
+  address: string;
+  phone: string;
+  occupation: string;
+  account: string;
+  relation: string;
+  slots: Record<string, string>; // colName → stationName
 }
 
 export async function GET(request: NextRequest) {
@@ -48,9 +65,10 @@ export async function GET(request: NextRequest) {
       )
     );
 
-    const rows: Record<string, string>[] = [];
+    // 전화번호 기준으로 한 사람 = 한 행으로 합치기
+    const personMap = new Map<string, PersonRow>();
 
-    for (const { sheet, rows: sheetRows } of responses) {
+    for (const { rows: sheetRows } of responses) {
       for (let i = 1; i < sheetRows.length; i++) {
         const row = sheetRows[i];
         const name = (row[3] || '').trim();
@@ -60,40 +78,80 @@ export async function GET(request: NextRequest) {
         if (!name) continue;
         if (recruiterCol !== recruiterName && !notes.includes(notesPrefix)) continue;
 
+        const phoneKey = `${row[6] || ''}${row[7] || ''}${row[8] || ''}`.replace(/[^0-9]/g, '');
         const phone = [row[6], row[7], row[8]].filter(Boolean).join('-');
         const timeSlot = row[16] || '';
-        const statusMap: Record<string, string> = { applied: '신청완료', confirmed: '확정', lottery: '추첨대기' };
+        const stationName = row[17] || '';
+        const colName = SLOT_COL[timeSlot];
+        if (!colName) continue;
 
-        rows.push({
-          '유형': sheet.typeLabel,
-          '이름': name,
-          '연락처': phone,
-          '생년월일': (row[4] || '').replace(/'/g, ''),
-          '성별': row[5] === '1' ? '남' : row[5] === '2' ? '여' : '',
-          '시군구': row[18] || '',
-          '투표소': row[17] || '',
-          '시간대': TIME_SLOT_LABELS[timeSlot] || timeSlot,
-          '상태': statusMap[row[21] || 'applied'] || row[21] || '',
-          '신청일시': row[20] || '',
-        });
+        // 관계 추출: notes에서 모집:xxx 제거, 나머지 표시
+        let relation = '';
+        if (notes) {
+          relation = notes
+            .split(',')
+            .filter((p: string) => !p.startsWith('모집:'))
+            .join(',')
+            .trim();
+        }
+
+        if (!personMap.has(phoneKey)) {
+          personMap.set(phoneKey, {
+            name,
+            birthDate: (row[4] || '').replace(/'/g, ''),
+            address: [row[10], row[11]].filter(Boolean).join(' '),
+            phone,
+            occupation: row[12] || '',
+            account: row[13] || '',
+            relation,
+            slots: {},
+          });
+        }
+
+        const person = personMap.get(phoneKey)!;
+        person.slots[colName] = stationName;
+        // 관계가 비어있으면 다른 시트에서 채우기
+        if (!person.relation && relation) {
+          person.relation = relation;
+        }
       }
     }
 
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(rows);
+    // 엑셀 데이터 구성
+    const headers = ['이름', '생년월일', '주소', '연락처', '직업', '계좌', ...COL_ORDER, '관계'];
+    const excelRows: string[][] = [headers];
 
-    // 열 너비 설정
+    for (const person of personMap.values()) {
+      excelRows.push([
+        person.name,
+        person.birthDate,
+        person.address,
+        person.phone,
+        person.occupation,
+        person.account,
+        ...COL_ORDER.map(col => person.slots[col] || ''),
+        person.relation,
+      ]);
+    }
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(excelRows);
+
     ws['!cols'] = [
-      { wch: 8 },  // 유형
-      { wch: 10 }, // 이름
-      { wch: 15 }, // 연락처
-      { wch: 10 }, // 생년월일
-      { wch: 5 },  // 성별
-      { wch: 10 }, // 시군구
-      { wch: 20 }, // 투표소
-      { wch: 12 }, // 시간대
-      { wch: 8 },  // 상태
-      { wch: 20 }, // 신청일시
+      { wch: 8 },   // 이름
+      { wch: 10 },  // 생년월일
+      { wch: 30 },  // 주소
+      { wch: 15 },  // 연락처
+      { wch: 8 },   // 직업
+      { wch: 20 },  // 계좌
+      { wch: 14 },  // 5/29 오전
+      { wch: 14 },  // 5/29 오후
+      { wch: 14 },  // 5/30 오전
+      { wch: 14 },  // 5/30 오후
+      { wch: 14 },  // 본투표 오전
+      { wch: 14 },  // 본투표 오후
+      { wch: 14 },  // 개표
+      { wch: 12 },  // 관계
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, '모집현황');
