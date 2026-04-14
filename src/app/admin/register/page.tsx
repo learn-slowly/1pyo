@@ -208,8 +208,8 @@ export default function AdminRegisterPage() {
           <div className="flex gap-2">
             <input type="text" value={zipCode} readOnly placeholder="우편번호" className="w-24 p-2 border rounded-lg text-sm bg-gray-50" />
             <button type="button" onClick={openPostcode} className="px-3 py-2 bg-gray-700 text-white rounded-lg text-xs font-medium">주소 검색</button>
-            <input type="text" value={address} readOnly placeholder="기본주소 *" className="flex-1 p-2 border rounded-lg text-sm bg-gray-50" />
           </div>
+          <input type="text" value={address} readOnly placeholder="기본주소 *" className="w-full p-2 border rounded-lg text-sm bg-gray-50" />
           <input type="text" value={addressDetail} onChange={(e) => setAddressDetail(e.target.value)}
             placeholder="상세주소" className="w-full p-2 border rounded-lg text-sm" />
           <div className="grid grid-cols-2 gap-3">
