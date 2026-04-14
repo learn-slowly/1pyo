@@ -165,6 +165,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 정렬: 사전1일차 → 사전2일차 → 본투표 → 개표
+    const slotOrder: Record<string, number> = { d1_am: 0, d1_pm: 1, d2_am: 2, d2_pm: 3, am: 4, pm: 5, all: 6 };
+    results.sort((a, b) => (slotOrder[a.timeSlot] ?? 9) - (slotOrder[b.timeSlot] ?? 9));
+
     if (results.length === 0) {
       return NextResponse.json({ success: true, results: [], message: '신청 내역이 없습니다.' });
     }
