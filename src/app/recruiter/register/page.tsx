@@ -46,6 +46,10 @@ function isSlotFull(station: Station, slotValue: string): boolean {
   }
 }
 
+function isStationFullForConfig(station: Station, config: SlotConfig): boolean {
+  return config.timeSlots.every(ts => isSlotFull(station, ts.value));
+}
+
 const emptySlot = (): SlotSelection => ({ enabled: false, sigungu: '', stationId: '', timeSlot: '' });
 
 export default function RecruiterRegisterPage() {
@@ -115,8 +119,8 @@ export default function RecruiterRegisterPage() {
     const data = stationsMap[config.type];
     if (!data) return { sigunguList: [], stations: [] };
     const slot = slots[config.key];
-    const stations = slot.sigungu ? data.stations.filter(s => s.sigungu === slot.sigungu) : data.stations;
-    return { sigunguList: data.sigunguList, stations };
+    const filtered = data.stations.filter(s => (!slot.sigungu || s.sigungu === slot.sigungu) && !isStationFullForConfig(s, config));
+    return { sigunguList: data.sigunguList, stations: filtered };
   };
 
   const enabledSlots = SLOT_CONFIGS.filter(c => slots[c.key].enabled);
