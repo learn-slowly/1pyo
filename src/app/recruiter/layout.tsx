@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 const NAV_ITEMS = [
   { href: '/recruiter/register', label: '참관인 등록' },
   { href: '/recruiter/list', label: '내 모집 현황' },
+  { href: '/recruiter/vacancies', label: '빈자리' },
 ];
 
 export default function RecruiterLayout({ children }: { children: React.ReactNode }) {
