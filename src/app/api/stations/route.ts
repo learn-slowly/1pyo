@@ -30,7 +30,8 @@ export async function GET(request: NextRequest) {
       getConfig(),
     ]);
 
-    return NextResponse.json({ stations, sigunguList, config });
+    const { password, ...safeConfig } = config;
+    return NextResponse.json({ stations, sigunguList, config: safeConfig });
   } catch (error) {
     console.error('stations API error:', error);
     return NextResponse.json(

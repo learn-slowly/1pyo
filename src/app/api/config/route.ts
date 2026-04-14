@@ -8,7 +8,8 @@ export async function GET() {
       getCandidateInfo(),
     ]);
 
-    return NextResponse.json({ config, candidates });
+    const { password, ...safeConfig } = config;
+    return NextResponse.json({ config: safeConfig, candidates });
   } catch (err) {
     console.error('Config fetch error:', err);
     return NextResponse.json(
