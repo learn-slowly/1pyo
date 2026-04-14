@@ -279,7 +279,7 @@ function getDayGroup(timeSlot: string): string {
 // === Applications ===
 export async function submitApplication(
   data: ApplicationRequest,
-  options?: { skipBlacklist?: boolean; notes?: string; recruiter?: string },
+  options?: { skipBlacklist?: boolean; skipDuplicateCheck?: boolean; notes?: string; recruiter?: string },
 ): Promise<{ success: boolean; id: string; status: string; message: string }> {
   if (useMock) return (await getMock()).submitApplication(data);
 
@@ -313,43 +313,46 @@ export async function submitApplication(
   }
   }
 
-  // 중복 체크: 같은 전화번호 + 같은 날 → 장소 무관하게 차단
-  for (let i = 1; i < existingRows.length; i++) {
-    const row = existingRows[i];
-    if (!row[3]) continue; // D열(성명) 비어있으면 skip
-    const rowPhone = `${row[6] || ''}${row[7] || ''}${row[8] || ''}`.replace(/[^0-9]/g, '');
-    if (rowPhone !== normalizedPhone) continue;
-
-    const rowTimeSlot = row[16] || ''; // Q열: time_slot
-    if (getDayGroup(rowTimeSlot) === myDayGroup) {
-      return { success: false, id: '', status: '', message: '같은 날에 이미 신청한 내역이 있습니다. 하루에 한 타임만 신청할 수 있습니다.' };
-    }
-  }
-
-  // 크로스 체크: 본투표 오후 ↔ 개표 상호 차단
-  if (data.type === 'counting' || (data.type === 'polling' && data.time_slot === 'pm')) {
-    const crossSheet = data.type === 'counting'
-      ? APPLICANT_SHEETS.polling   // 개표 신청 시 → 본투표 시트 확인
-      : APPLICANT_SHEETS.counting; // 본투표 오후 신청 시 → 개표 시트 확인
-    const crossSlot = data.type === 'counting' ? 'pm' : 'all';
-
-    const crossRes = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: `${crossSheet}!A:V`,
-    });
-    const crossRows = crossRes.data.values || [];
-    for (let i = 1; i < crossRows.length; i++) {
-      const row = crossRows[i];
+  // 중복/크로스 체크 (모집책 일괄등록 시 건너뜀)
+  if (!options?.skipDuplicateCheck) {
+    // 중복 체크: 같은 전화번호 + 같은 날 → 장소 무관하게 차단
+    for (let i = 1; i < existingRows.length; i++) {
+      const row = existingRows[i];
       if (!row[3]) continue;
       const rowPhone = `${row[6] || ''}${row[7] || ''}${row[8] || ''}`.replace(/[^0-9]/g, '');
       if (rowPhone !== normalizedPhone) continue;
 
       const rowTimeSlot = row[16] || '';
-      if (rowTimeSlot === crossSlot) {
-        const msg = data.type === 'counting'
-          ? '본투표 오후 참관인으로 신청되어 있어 개표 참관인을 신청할 수 없습니다.'
-          : '개표 참관인으로 신청되어 있어 본투표 오후를 신청할 수 없습니다.';
-        return { success: false, id: '', status: '', message: msg };
+      if (getDayGroup(rowTimeSlot) === myDayGroup) {
+        return { success: false, id: '', status: '', message: '같은 날에 이미 신청한 내역이 있습니다. 하루에 한 타임만 신청할 수 있습니다.' };
+      }
+    }
+
+    // 크로스 체크: 본투표 오후 ↔ 개표 상호 차단
+    if (data.type === 'counting' || (data.type === 'polling' && data.time_slot === 'pm')) {
+      const crossSheet = data.type === 'counting'
+        ? APPLICANT_SHEETS.polling
+        : APPLICANT_SHEETS.counting;
+      const crossSlot = data.type === 'counting' ? 'pm' : 'all';
+
+      const crossRes = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `${crossSheet}!A:V`,
+      });
+      const crossRows = crossRes.data.values || [];
+      for (let i = 1; i < crossRows.length; i++) {
+        const row = crossRows[i];
+        if (!row[3]) continue;
+        const rowPhone = `${row[6] || ''}${row[7] || ''}${row[8] || ''}`.replace(/[^0-9]/g, '');
+        if (rowPhone !== normalizedPhone) continue;
+
+        const rowTimeSlot = row[16] || '';
+        if (rowTimeSlot === crossSlot) {
+          const msg = data.type === 'counting'
+            ? '본투표 오후 참관인으로 신청되어 있어 개표 참관인을 신청할 수 없습니다.'
+            : '개표 참관인으로 신청되어 있어 본투표 오후를 신청할 수 없습니다.';
+          return { success: false, id: '', status: '', message: msg };
+        }
       }
     }
   }
