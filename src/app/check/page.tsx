@@ -12,6 +12,12 @@ interface ApplicationResult {
   statusLabel: string;
   applicationId: string;
   timestamp: string;
+  birthDate: string;
+  gender: string;
+  phone: string;
+  address: string;
+  occupation: string;
+  account: string;
 }
 
 function formatPhone(value: string): string {
@@ -94,8 +100,44 @@ export default function CheckPage() {
 
         {/* 결과 */}
         {searched && results && results.length > 0 && (
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-700">{results.length}건의 신청 내역</p>
+          <div className="space-y-4">
+            {/* 개인정보 (첫 번째 결과 기준, 모든 신청에 공통) */}
+            <div className="border rounded-xl p-4 bg-white space-y-2">
+              <h3 className="text-sm font-bold text-gray-900">내 신청 정보</h3>
+              <div className="text-sm space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">이름</span>
+                  <span className="text-gray-900">{name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">생년월일</span>
+                  <span className="text-gray-900">{results[0].birthDate}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">성별</span>
+                  <span className="text-gray-900">{results[0].gender}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">연락처</span>
+                  <span className="text-gray-900">{results[0].phone}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">주소</span>
+                  <span className="text-gray-900 text-right max-w-[60%]">{results[0].address}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">직업</span>
+                  <span className="text-gray-900">{results[0].occupation}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">계좌번호</span>
+                  <span className="text-gray-900">{results[0].account}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 참관 배정 목록 */}
+            <p className="text-sm font-medium text-gray-700">{results.length}건의 참관 배정</p>
             {results.map((r, i) => (
               <div key={i} className="border rounded-xl p-4 bg-white space-y-2">
                 <div className="flex items-center justify-between">

@@ -42,6 +42,12 @@ interface ApplicationResult {
   statusLabel: string;
   applicationId: string;
   timestamp: string;
+  birthDate: string;
+  gender: string;
+  phone: string;
+  address: string;
+  occupation: string;
+  account: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -88,6 +94,13 @@ export async function POST(request: NextRequest) {
         const timestamp = row[20] || '';      // U열
         const status = row[21] || 'applied';  // V열
 
+        const birthDate = (row[4] || '').replace(/'/g, '');
+        const gender = row[5] === '1' ? '남' : row[5] === '2' ? '여' : '';
+        const phone = [row[6], row[7], row[8]].filter(Boolean).join('-');
+        const address = [row[10], row[11]].filter(Boolean).join(' ');
+        const occupation = row[12] || '';
+        const account = row[13] || '';
+
         results.push({
           type: sheet.type,
           stationName,
@@ -98,6 +111,12 @@ export async function POST(request: NextRequest) {
           statusLabel: status === 'lottery' ? '추첨대기' : status === 'confirmed' ? '확정' : '신청완료',
           applicationId,
           timestamp,
+          birthDate,
+          gender,
+          phone,
+          address,
+          occupation,
+          account,
         });
       }
     }
