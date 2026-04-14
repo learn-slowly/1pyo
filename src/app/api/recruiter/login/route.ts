@@ -11,6 +11,9 @@ export async function POST(request: NextRequest) {
     if (!found) {
       return NextResponse.json({ success: false, message: '이름 또는 코드가 올바르지 않습니다.' }, { status: 401 });
     }
+    if (found.status === 'inactive') {
+      return NextResponse.json({ success: false, message: '비활성화된 계정입니다. 관리자에게 문의하세요.' }, { status: 403 });
+    }
 
     const token = createRecruiterToken(found.name);
     const response = NextResponse.json({ success: true, recruiterName: found.name });

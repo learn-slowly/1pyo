@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 const NAV_ITEMS = [
   { href: '/admin/dashboard', label: '현황' },
   { href: '/admin/register', label: '대리신청' },
+  { href: '/admin/recruiters', label: '모집책' },
   { href: '/admin/upload', label: '업로드' },
 ];
 

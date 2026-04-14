@@ -592,28 +592,145 @@ export async function submitIncidentReport(
 }
 
 // === 모집책 ===
-export async function getRecruiters(): Promise<{ name: string; code: string }[]> {
-  if (useMock) return [{ name: '테스트모집책', code: '1234' }];
+export interface Recruiter {
+  rowIndex: number;
+  name: string;
+  code: string;
+  status: 'active' | 'inactive';
+  createdAt: string;
+}
 
-  const cached = getCached<{ name: string; code: string }[]>('recruiters');
+function generateCode(): string {
+  return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
+async function ensureRecruiterSheet(): Promise<void> {
+  const sheets = await getSheetsClient();
+  const spreadsheetId = getSpreadsheetId();
+
+  // 시트 존재 여부 확인
+  const meta = await sheets.spreadsheets.get({
+    spreadsheetId,
+    fields: 'sheets.properties.title',
+  });
+  const sheetNames = (meta.data.sheets || []).map(s => s.properties?.title || '');
+
+  if (!sheetNames.includes('모집책')) {
+    // 시트 생성
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
+      requestBody: {
+        requests: [{ addSheet: { properties: { title: '모집책' } } }],
+      },
+    });
+    // 헤더 추가
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: '모집책!A1:D1',
+      valueInputOption: 'RAW',
+      requestBody: { values: [['이름', '코드', '상태', '생성일']] },
+    });
+  }
+}
+
+export async function getRecruiters(): Promise<Recruiter[]> {
+  if (useMock) return [{ rowIndex: 2, name: '테스트모집책', code: 'ABC123', status: 'active', createdAt: '2026-04-14' }];
+
+  const cached = getCached<Recruiter[]>('recruiters');
   if (cached) return cached;
 
-  const sheets = await getSheetsClient();
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: getSpreadsheetId(),
-    range: '모집책!A:B',
-  });
+  try {
+    const sheets = await getSheetsClient();
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: getSpreadsheetId(),
+      range: '모집책!A:D',
+    });
 
-  const rows = res.data.values || [];
-  const recruiters: { name: string; code: string }[] = [];
-  for (let i = 1; i < rows.length; i++) {
-    const name = (rows[i][0] || '').trim();
-    const code = (rows[i][1] || '').trim();
-    if (name && code) recruiters.push({ name, code });
+    const rows = res.data.values || [];
+    const recruiters: Recruiter[] = [];
+    for (let i = 1; i < rows.length; i++) {
+      const name = (rows[i][0] || '').trim();
+      const code = (rows[i][1] || '').trim();
+      if (!name || !code) continue;
+      recruiters.push({
+        rowIndex: i + 1,
+        name,
+        code,
+        status: (rows[i][2] || 'active') === 'inactive' ? 'inactive' : 'active',
+        createdAt: rows[i][3] || '',
+      });
+    }
+
+    setCache('recruiters', recruiters);
+    return recruiters;
+  } catch {
+    // 시트가 없으면 빈 배열 반환
+    return [];
+  }
+}
+
+export async function addRecruiter(name: string): Promise<{ success: boolean; message: string; recruiter?: Recruiter }> {
+  if (useMock) {
+    const code = generateCode();
+    return { success: true, message: '모집책이 추가되었습니다.', recruiter: { rowIndex: 2, name, code, status: 'active', createdAt: new Date().toISOString().slice(0, 10) } };
   }
 
-  setCache('recruiters', recruiters);
-  return recruiters;
+  // 시트 없으면 자동 생성
+  await ensureRecruiterSheet();
+
+  const existing = await getRecruiters();
+  if (existing.find(r => r.name === name)) {
+    return { success: false, message: '이미 존재하는 이름입니다.' };
+  }
+
+  const code = generateCode();
+  const createdAt = new Date().toISOString().slice(0, 10);
+
+  const sheets = await getSheetsClient();
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: getSpreadsheetId(),
+    range: '모집책!A:D',
+    valueInputOption: 'RAW',
+    requestBody: { values: [[name, code, 'active', createdAt]] },
+  });
+
+  cache.delete('recruiters');
+
+  // 방금 추가한 행의 rowIndex를 가져오기 위해 다시 조회
+  const refreshed = await getRecruiters();
+  const added = refreshed.find(r => r.name === name && r.code === code);
+
+  return { success: true, message: '모집책이 추가되었습니다.', recruiter: added };
+}
+
+export async function toggleRecruiter(rowIndex: number, newStatus: 'active' | 'inactive'): Promise<{ success: boolean; message: string }> {
+  if (useMock) return { success: true, message: '상태가 변경되었습니다.' };
+
+  const sheets = await getSheetsClient();
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: getSpreadsheetId(),
+    range: `모집책!C${rowIndex}`,
+    valueInputOption: 'RAW',
+    requestBody: { values: [[newStatus]] },
+  });
+
+  cache.delete('recruiters');
+  return { success: true, message: newStatus === 'active' ? '활성화되었습니다.' : '비활성화되었습니다.' };
+}
+
+export async function deleteRecruiter(rowIndex: number): Promise<{ success: boolean; message: string }> {
+  if (useMock) return { success: true, message: '삭제되었습니다.' };
+
+  const sheets = await getSheetsClient();
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: getSpreadsheetId(),
+    range: `모집책!A${rowIndex}:D${rowIndex}`,
+    valueInputOption: 'RAW',
+    requestBody: { values: [['', '', '', '']] },
+  });
+
+  cache.delete('recruiters');
+  return { success: true, message: '삭제되었습니다.' };
 }
 
 // === 블랙리스트 ===
