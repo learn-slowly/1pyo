@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 interface ApplicationResult {
@@ -28,16 +29,24 @@ function formatPhone(value: string): string {
 }
 
 export default function CheckPage() {
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+  return (
+    <Suspense fallback={<div className="text-center py-12 text-gray-400">불러오는 중...</div>}>
+      <CheckContent />
+    </Suspense>
+  );
+}
+
+function CheckContent() {
+  const searchParams = useSearchParams();
+  const [name, setName] = useState(searchParams.get('name') || '');
+  const [phone, setPhone] = useState(searchParams.get('phone') || '');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ApplicationResult[] | null>(null);
   const [message, setMessage] = useState('');
   const [searched, setSearched] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (name.trim().length < 2 || phone.replace(/[^0-9]/g, '').length < 10) return;
+  const doSearch = useCallback(async (searchName: string, searchPhone: string) => {
+    if (searchName.trim().length < 2 || searchPhone.replace(/[^0-9]/g, '').length < 10) return;
 
     setLoading(true);
     setMessage('');
@@ -47,7 +56,7 @@ export default function CheckPage() {
       const res = await fetch('/api/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), phone }),
+        body: JSON.stringify({ name: searchName.trim(), phone: searchPhone }),
       });
       const data = await res.json();
       setResults(data.results || []);
@@ -60,6 +69,18 @@ export default function CheckPage() {
       setLoading(false);
       setSearched(true);
     }
+  }, []);
+
+  // 쿼리 파라미터로 자동 조회
+  useEffect(() => {
+    if (searchParams.get('name') && searchParams.get('phone')) {
+      doSearch(searchParams.get('name')!, searchParams.get('phone')!);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    doSearch(name, phone);
   };
 
   return (

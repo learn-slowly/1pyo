@@ -166,7 +166,13 @@ export default function RecruiterListPage() {
               {filtered.map((app) => (
                 <tr key={`${app.sheetName}-${app.rowIndex}`} className="border-b last:border-0 hover:bg-gray-50">
                   <td className="px-3 py-2 whitespace-nowrap text-gray-700">{app.typeLabel}</td>
-                  <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-900">{app.name}</td>
+                  <td className="px-3 py-2 whitespace-nowrap font-medium">
+                    <a
+                      href={`/check?name=${encodeURIComponent(app.name)}&phone=${encodeURIComponent(app.phone)}`}
+                      target="_blank"
+                      className="text-yellow-700 hover:text-yellow-900 underline decoration-yellow-300"
+                    >{app.name}</a>
+                  </td>
                   <td className="px-3 py-2 whitespace-nowrap text-gray-700">{app.phone}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-gray-700">{app.sigungu}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-gray-700">{app.stationName}</td>
