@@ -112,7 +112,7 @@ function Step1() {
   );
 }
 
-function Step2() {
+function Step2({ disqualifyConfirmed, onDisqualifyChange }: { disqualifyConfirmed: boolean; onDisqualifyChange: (v: boolean) => void }) {
   return (
     <>
       <h3 className="text-sm font-bold text-gray-700 mb-2">참관인의 종류</h3>
@@ -137,15 +137,27 @@ function Step2() {
       <h3 className="text-sm font-bold text-gray-700 mb-2">누가 참관인이 되나요?</h3>
       <p className="text-sm text-gray-600 mb-4">정의당이 후보자마다 투표소별 1인, 개표소별 최대 6인을 선정하여 선거관리위원회에 신고합니다. 즉, <strong>정당이 직접 보내는 사람</strong>입니다.</p>
 
-      <h3 className="text-sm font-bold text-gray-700 mb-2">참관인이 될 수 없는 사람</h3>
-      <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
-        <li>대한민국 국민이 아닌 자</li>
-        <li>미성년자</li>
-        <li>선거권이 없는 자 (금고 이상의 형을 선고받고 집행 중인 자 등)</li>
-        <li>공무원 등 입후보 제한직에 있는 자</li>
-        <li>읍·면·동 주민자치위원회 위원, 통·리·반의 장</li>
-        <li>후보자 본인 또는 후보자의 배우자</li>
-      </ul>
+      <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4">
+        <h3 className="text-sm font-bold text-red-600 mb-3">참관인이 될 수 없는 사람</h3>
+        <p className="text-xs text-red-500 mb-3">아래에 해당하는 분은 참관인 신청이 불가합니다. 선관위에서 자격을 대조하며, 결격사유 발견 시 참관인 자격이 취소됩니다.</p>
+        <ul className="text-sm text-gray-700 space-y-2">
+          <li className="flex gap-2 items-start"><span className="text-red-500 shrink-0">&#10007;</span>대한민국 국민이 아닌 자</li>
+          <li className="flex gap-2 items-start"><span className="text-red-500 shrink-0">&#10007;</span>미성년자</li>
+          <li className="flex gap-2 items-start"><span className="text-red-500 shrink-0">&#10007;</span>선거권이 없는 자 (금고 이상의 형을 선고받고 집행 중인 자 등)</li>
+          <li className="flex gap-2 items-start"><span className="text-red-500 shrink-0">&#10007;</span>공무원 등 입후보 제한직에 있는 자</li>
+          <li className="flex gap-2 items-start"><span className="text-red-500 shrink-0">&#10007;</span>읍·면·동 주민자치위원회 위원, 통·리·반의 장</li>
+          <li className="flex gap-2 items-start"><span className="text-red-500 shrink-0">&#10007;</span>후보자 본인 또는 후보자의 배우자</li>
+        </ul>
+        <label className="flex items-start gap-3 mt-4 pt-3 border-t border-red-200 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={disqualifyConfirmed}
+            onChange={(e) => onDisqualifyChange(e.target.checked)}
+            className="mt-0.5 rounded border-red-300 text-red-500 focus:ring-red-400"
+          />
+          <span className="text-sm font-medium text-gray-900">위 결격사유에 해당하지 않음을 확인합니다.</span>
+        </label>
+      </div>
     </>
   );
 }
@@ -305,8 +317,9 @@ function Step6() {
 
       <h3 className="text-sm font-bold text-gray-700 mb-2">긴급 상황 연락처</h3>
       <div className="bg-white border rounded-xl p-4 text-sm text-gray-700 space-y-1 mb-4">
-        <p>정의당 경남도당: <strong>010-5960-5190</strong></p>
-        <p>진주시지역위원회: <strong>010-5168-2404</strong></p>
+        <p>진주: <strong>010-5168-2404</strong> (문자만 가능)</p>
+        <p>진주 외 경남 전역: <strong>010-5960-5190</strong> (문자만 가능)</p>
+        <p className="text-xs text-red-400 mt-2">* 업무 폭주로 응대가 늦습니다. 불필요한 통화 시도시 신청 반려합니다.</p>
       </div>
 
       <h3 className="text-sm font-bold text-gray-700 mb-2">관련 법령</h3>
@@ -463,12 +476,13 @@ function QuizStep({ onPass }: { onPass: () => void }) {
 
 // === 메인 페이지 ===
 
-const STEP_COMPONENTS = [Step1, Step2, Step3, Step4, Step5, Step6];
+const STEP_COMPONENTS = [Step1, () => null, Step3, Step4, Step5, Step6];
 
 export default function GuidePage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [quizPassed, setQuizPassed] = useState(false);
+  const [disqualifyConfirmed, setDisqualifyConfirmed] = useState(false);
 
   // 이미 이수한 경우
   useEffect(() => {
@@ -540,7 +554,11 @@ export default function GuidePage() {
       </h2>
 
       {/* 콘텐츠 */}
-      {StepContent && <StepContent />}
+      {step === 1 ? (
+        <Step2 disqualifyConfirmed={disqualifyConfirmed} onDisqualifyChange={setDisqualifyConfirmed} />
+      ) : StepContent ? (
+        <StepContent />
+      ) : null}
       {isQuizStep && <QuizStep onPass={handleQuizPass} />}
 
       {/* 네비게이션 */}
@@ -556,7 +574,8 @@ export default function GuidePage() {
         {!isQuizStep ? (
           <button
             onClick={goNext}
-            className="flex-1 py-3 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition-colors"
+            disabled={step === 1 && !disqualifyConfirmed}
+            className="flex-1 py-3 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             확인했습니다
           </button>
@@ -572,8 +591,9 @@ export default function GuidePage() {
 
       {/* 문의 안내 */}
       <div className="text-center text-xs text-gray-400 space-y-0.5 mt-8 mb-4">
-        <p>문의: 010-5960-5190 (문자만 가능, 전화 연결 시 신청 반려)</p>
-        <p>진주지역: 010-5168-2404 (문자만 가능)</p>
+        <p>진주: 010-5168-2404 (문자만 가능)</p>
+        <p>진주 외 경남 전역: 010-5960-5190 (문자만 가능)</p>
+        <p className="mt-1">* 업무 폭주로 응대가 늦습니다. 불필요한 통화 시도시 신청 반려합니다.</p>
       </div>
     </div>
   );

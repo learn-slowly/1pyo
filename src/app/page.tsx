@@ -33,8 +33,9 @@ export default function Home() {
         </div>
 
         <div className="text-xs text-gray-400 space-y-1">
-          <p>문의: 010-5960-5190 (문자만 가능, 전화 연결 시 신청 반려)</p>
-          <p>진주지역: 010-5168-2404 (문자만 가능)</p>
+          <p>진주: 010-5168-2404 (문자만 가능)</p>
+          <p>진주 외 경남 전역: 010-5960-5190 (문자만 가능)</p>
+          <p className="mt-1">* 업무 폭주로 응대가 늦습니다. 불필요한 통화 시도시 신청 반려합니다.</p>
         </div>
 
         <Link href="/admin" className="text-xs text-gray-300 hover:text-gray-500 transition-colors">

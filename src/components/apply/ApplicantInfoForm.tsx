@@ -143,7 +143,7 @@ export default function ApplicantInfoForm({ station, timeSlot, isLottery, isSubm
 
       {/* 경고문 */}
       <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-        문의는 문자로만 받습니다. 전화 문의 시 참관인 신청 내역이 무통보 삭제됩니다.
+        문의는 문자로만 받습니다. 업무 폭주로 응대가 늦습니다. 불필요한 통화 시도시 신청 반려합니다.
       </div>
 
       {isLottery && (
@@ -195,6 +195,7 @@ export default function ApplicantInfoForm({ station, timeSlot, isLottery, isSubm
       {/* 주소 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">주소 *</label>
+        <p className="text-xs text-red-500 mb-1">반드시 주민등록상의 주소 입력 (선거관리위원회에서 대조함)</p>
         <div className="flex gap-2 mb-2">
           <input id="zip_code" type="text" value={zipCode} readOnly
             placeholder="우편번호" className="w-24 p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900" />
