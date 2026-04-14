@@ -166,7 +166,7 @@ export default function ApplyForm() {
     } catch {
       dispatch({ type: 'SET_ERROR', payload: '네트워크 오류가 발생했습니다.' });
     }
-  }, [state.selectedStation, state.timeSlot, state.observationType, state.sigungu]);
+  }, [state.selectedStation, state.timeSlot, state.observationType, state.sigungu, state.memberVerification]);
 
   const lotteryMode = stationsData?.config.lottery_mode ?? false;
   const isMembersOnly = stationsData?.config.mode === 'members_only';
