@@ -17,7 +17,7 @@ async function getSheetsClient() {
 }
 
 const SHEETS = [
-  { name: '본투표참관신청자', type: '본투표 참관', typeKey: 'polling' },
+  { name: '본투표참관신청자', type: '본투표 참관 (6/3 수)', typeKey: 'polling' },
   { name: '사전투표참관신청자', type: '사전투표 참관', typeKey: 'early' },
   { name: '개표참관신청자', type: '개표 참관', typeKey: 'counting' },
 ];
