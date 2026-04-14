@@ -1,5 +1,5 @@
 export const OBSERVATION_TYPES = {
-  early: { label: '사전투표 참관', description: '사전투표일 이틀간 (5/29 금, 5/30 토)' },
+  early: { label: '사전투표 참관', description: '사전투표일 (5/29 금, 5/30 토)' },
   polling: { label: '본투표 참관', description: '6월 3일 선거일 당일' },
   counting: { label: '개표 참관', description: '6월 3일 밤 개표' },
 } as const;

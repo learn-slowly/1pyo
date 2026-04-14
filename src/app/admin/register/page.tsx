@@ -61,7 +61,8 @@ export default function AdminRegisterPage() {
   const [address, setAddress] = useState('');
   const [addressDetail, setAddressDetail] = useState('');
   const [occupation, setOccupation] = useState('');
-  const [account, setAccount] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
 
   const [slots, setSlots] = useState<Record<string, SlotSelection>>({
     early_d1: emptySlot(), early_d2: emptySlot(), polling: emptySlot(), counting: emptySlot(),
@@ -120,13 +121,13 @@ export default function AdminRegisterPage() {
   const resetForm = () => {
     setName(''); setPhone(''); setBirthDate(''); setGender('');
     setZipCode(''); setAddress(''); setAddressDetail('');
-    setOccupation(''); setAccount('');
+    setOccupation(''); setBankName(''); setAccountNumber('');
     setSlots({ early_d1: emptySlot(), early_d2: emptySlot(), polling: emptySlot(), counting: emptySlot() });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !phone || !birthDate || !gender || !address || !occupation || !account) {
+    if (!name || !phone || !birthDate || !gender || !address || !occupation || !bankName || !accountNumber) {
       setResult({ success: false, message: '인적정보를 모두 입력해주세요.' });
       return;
     }
@@ -165,7 +166,7 @@ export default function AdminRegisterPage() {
         body: JSON.stringify({
           name, phone, birth_date: birthDate, gender,
           zip_code: zipCode, address, address_detail: addressDetail,
-          occupation, account, slots: slotData,
+          occupation, account: `${bankName.trim()} ${accountNumber.trim()}`, slots: slotData,
         }),
       });
       const data = await res.json();
@@ -212,11 +213,13 @@ export default function AdminRegisterPage() {
           <input type="text" value={address} readOnly placeholder="기본주소 *" className="w-full p-2 border rounded-lg text-sm bg-gray-50" />
           <input type="text" value={addressDetail} onChange={(e) => setAddressDetail(e.target.value)}
             placeholder="상세주소" className="w-full p-2 border rounded-lg text-sm" />
-          <div className="grid grid-cols-2 gap-3">
-            <input type="text" value={occupation} onChange={(e) => setOccupation(e.target.value)}
-              placeholder="직업 *" className="p-2 border rounded-lg text-sm" maxLength={20} />
-            <input type="text" value={account} onChange={(e) => setAccount(e.target.value)}
-              placeholder="계좌번호 *" className="p-2 border rounded-lg text-sm" maxLength={40} />
+          <input type="text" value={occupation} onChange={(e) => setOccupation(e.target.value)}
+            placeholder="직업 *" className="w-full p-2 border rounded-lg text-sm" maxLength={20} />
+          <div className="grid grid-cols-[1fr_2fr] gap-2">
+            <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)}
+              placeholder="은행명 *" className="p-2 border rounded-lg text-sm" maxLength={10} />
+            <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)}
+              placeholder="계좌번호 *" className="p-2 border rounded-lg text-sm" maxLength={30} />
           </div>
         </div>
 

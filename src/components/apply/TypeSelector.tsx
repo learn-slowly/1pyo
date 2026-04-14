@@ -18,6 +18,10 @@ export default function TypeSelector({ selected, onSelect }: Props) {
   return (
     <div className="space-y-3">
       <h2 className="text-lg font-bold text-gray-900">참관 유형을 선택하세요</h2>
+      <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 space-y-1">
+        <p>· 투표 참관은 하루에 오전 또는 오후 중 <strong className="text-gray-900">1타임만</strong> 신청 가능합니다.</p>
+        <p>· 본투표 오후 참관인과 개표 참관인은 <strong className="text-gray-900">동시 신청이 불가</strong>합니다.</p>
+      </div>
       <div className="grid gap-3">
         {(Object.entries(OBSERVATION_TYPES) as [ObservationType, typeof OBSERVATION_TYPES[ObservationType]][]).map(
           ([type, info]) => {

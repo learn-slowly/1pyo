@@ -63,7 +63,8 @@ export default function ApplicantInfoForm({ station, timeSlot, isLottery, isSubm
   const [address, setAddress] = useState('');
   const [addressDetail, setAddressDetail] = useState('');
   const [occupation, setOccupation] = useState('');
-  const [account, setAccount] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const addressDetailRef = useCallback((node: HTMLInputElement | null) => {
     if (node && address && !addressDetail) node.focus();
@@ -101,10 +102,11 @@ export default function ApplicantInfoForm({ station, timeSlot, isLottery, isSubm
     if (!gender) e.gender = '성별을 선택해주세요';
     if (address.trim().length < 2) e.address = '주소를 입력해주세요';
     if (occupation.trim().length < 1) e.occupation = '직업을 입력해주세요';
-    if (account.trim().length < 2) e.account = '계좌번호를 입력해주세요';
+    if (!bankName.trim()) e.bankName = '은행명을 입력해주세요';
+    if (!accountNumber.trim()) e.accountNumber = '계좌번호를 입력해주세요';
     setErrors(e);
     return Object.keys(e).length === 0;
-  }, [name, phone, birthDate, gender, address, occupation, account]);
+  }, [name, phone, birthDate, gender, address, occupation, bankName, accountNumber]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,7 +120,7 @@ export default function ApplicantInfoForm({ station, timeSlot, isLottery, isSubm
       address: address.trim(),
       address_detail: addressDetail.trim(),
       occupation: occupation.trim(),
-      account: account.trim(),
+      account: `${bankName.trim()} ${accountNumber.trim()}`,
     });
   };
 
@@ -214,20 +216,25 @@ export default function ApplicantInfoForm({ station, timeSlot, isLottery, isSubm
           className="w-full p-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
       </div>
 
-      {/* 직업 + 계좌 */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label htmlFor="occupation" className="block text-sm font-medium text-gray-700 mb-1">직업 *</label>
-          <input id="occupation" type="text" value={occupation} onChange={(e) => setOccupation(e.target.value)}
-            placeholder="회사원" className={inputClass('occupation')} maxLength={20} />
-          {errors.occupation && <p className="text-red-500 text-xs mt-1">{errors.occupation}</p>}
+      {/* 직업 */}
+      <div>
+        <label htmlFor="occupation" className="block text-sm font-medium text-gray-700 mb-1">직업 *</label>
+        <input id="occupation" type="text" value={occupation} onChange={(e) => setOccupation(e.target.value)}
+          placeholder="회사원" className={inputClass('occupation')} maxLength={20} />
+        {errors.occupation && <p className="text-red-500 text-xs mt-1">{errors.occupation}</p>}
+      </div>
+
+      {/* 은행명 + 계좌번호 */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">계좌정보 *</label>
+        <div className="grid grid-cols-[1fr_2fr] gap-2">
+          <input id="bankName" type="text" value={bankName} onChange={(e) => setBankName(e.target.value)}
+            placeholder="은행명" className={inputClass('bankName')} maxLength={10} />
+          <input id="accountNumber" type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)}
+            placeholder="계좌번호" className={inputClass('accountNumber')} maxLength={30} />
         </div>
-        <div>
-          <label htmlFor="account" className="block text-sm font-medium text-gray-700 mb-1">계좌번호 *</label>
-          <input id="account" type="text" value={account} onChange={(e) => setAccount(e.target.value)}
-            placeholder="OO은행 11-111-11111" className={inputClass('account')} maxLength={40} />
-          {errors.account && <p className="text-red-500 text-xs mt-1">{errors.account}</p>}
-        </div>
+        {errors.bankName && <p className="text-red-500 text-xs mt-1">{errors.bankName}</p>}
+        {errors.accountNumber && <p className="text-red-500 text-xs mt-1">{errors.accountNumber}</p>}
       </div>
 
       {submitError && (
