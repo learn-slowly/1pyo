@@ -280,19 +280,22 @@ export default function RecruiterRegisterPage() {
                     </div>
 
                     {selectedStation && (
-                      <div className="flex gap-2">
-                        {config.timeSlots
-                          .filter(ts => !isSlotFull(selectedStation, ts.value))
-                          .map(ts => (
-                            <button key={ts.value} type="button"
-                              onClick={() => updateSlot(config.key, { timeSlot: ts.value })}
-                              className={`flex-1 py-2 rounded-lg border-2 text-xs font-medium ${
-                                slot.timeSlot === ts.value ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'
-                              }`}>
-                              {ts.label}
-                            </button>
-                          ))}
-                      </div>
+                      <>
+                        <p className="text-xs text-gray-500 px-1">{selectedStation.address}</p>
+                        <div className="flex gap-2">
+                          {config.timeSlots
+                            .filter(ts => !isSlotFull(selectedStation, ts.value))
+                            .map(ts => (
+                              <button key={ts.value} type="button"
+                                onClick={() => updateSlot(config.key, { timeSlot: ts.value })}
+                                className={`flex-1 py-2 rounded-lg border-2 text-xs font-medium ${
+                                  slot.timeSlot === ts.value ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'
+                                }`}>
+                                {ts.label}
+                              </button>
+                            ))}
+                        </div>
+                      </>
                     )}
 
                     {slot.stationId && slot.timeSlot && (
