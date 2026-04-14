@@ -23,13 +23,13 @@ const SHEETS = [
 ];
 
 const TIME_SLOT_LABELS: Record<string, string> = {
-  am: '오전',
-  pm: '오후',
+  am: '6/3 오전',
+  pm: '6/3 오후',
   d1_am: '5/29 오전',
   d1_pm: '5/29 오후',
   d2_am: '5/30 오전',
   d2_pm: '5/30 오후',
-  all: '종일',
+  all: '6/3 종일',
 };
 
 interface ApplicationResult {
