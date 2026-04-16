@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import type { Station } from '@/lib/types';
 
 const TYPE_OPTIONS = [
-  { value: 'early', label: '사전투표' },
   { value: 'polling', label: '본투표' },
   { value: 'counting', label: '개표' },
 ] as const;
@@ -49,7 +48,7 @@ function totalVacancies(station: Station): number {
 
 export default function VacanciesPage() {
   const router = useRouter();
-  const [type, setType] = useState<'early' | 'polling' | 'counting'>('early');
+  const [type, setType] = useState<'early' | 'polling' | 'counting'>('polling');
   const [sigungu, setSigungu] = useState('');
   const [stations, setStations] = useState<Station[]>([]);
   const [sigunguList, setSigunguList] = useState<string[]>([]);
