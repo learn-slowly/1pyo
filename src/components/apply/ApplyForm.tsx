@@ -41,13 +41,13 @@ const initialState: FormState = {
 function reducer(state: FormState, action: Action): FormState {
   switch (action.type) {
     case 'SELECT_TYPE':
-      return { ...initialState, step: 2, observationType: action.payload };
+      return { ...initialState, step: 2, observationType: action.payload, memberVerified: state.memberVerified, memberVerification: state.memberVerification, name: state.name };
     case 'SELECT_SIGUNGU':
       return { ...state, step: 3, sigungu: action.payload, selectedStation: null, timeSlot: null };
     case 'SELECT_STATION':
       return { ...state, step: 4, selectedStation: action.payload, timeSlot: null };
     case 'SELECT_TIMESLOT':
-      return { ...state, step: 5, timeSlot: action.payload, memberVerified: false, memberVerification: null };
+      return { ...state, step: 5, timeSlot: action.payload };
     case 'SET_MEMBER_VERIFIED':
       return {
         ...state,
@@ -98,14 +98,21 @@ export default function ApplyForm() {
   const [stationsData, setStationsData] = useState<StationsResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [guideChecked, setGuideChecked] = useState(false);
+  const [isMembersOnlyMode, setIsMembersOnlyMode] = useState(false);
 
-  // 교육 이수 확인
+  // 교육 이수 확인 + config 로드
   useEffect(() => {
     if (localStorage.getItem('guide_completed') !== 'true') {
       router.replace('/guide');
     } else {
       setGuideChecked(true);
     }
+    fetch('/api/config')
+      .then(res => res.json())
+      .then(data => {
+        if (data.config?.mode === 'members_only') setIsMembersOnlyMode(true);
+      })
+      .catch(() => {});
   }, [router]);
 
   // 투표소 데이터 가져오기
@@ -229,10 +236,22 @@ export default function ApplyForm() {
       )}
 
       {/* 단계별 렌더링 */}
-      {state.step === 1 && (
+      {state.step === 1 && isMembersOnlyMode && !state.memberVerified && (
+        <MemberVerificationForm
+          onVerified={(verification, verifiedName, verifiedBirthDate) =>
+            dispatch({
+              type: 'SET_MEMBER_VERIFIED',
+              payload: { verification, name: verifiedName, birthDate: verifiedBirthDate },
+            })
+          }
+        />
+      )}
+
+      {state.step === 1 && (!isMembersOnlyMode || state.memberVerified) && (
         <TypeSelector
           selected={state.observationType}
           onSelect={(type) => dispatch({ type: 'SELECT_TYPE', payload: type })}
+          memberVerification={state.memberVerification}
         />
       )}
 

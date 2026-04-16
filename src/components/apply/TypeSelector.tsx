@@ -1,6 +1,6 @@
 'use client';
 
-import { ObservationType } from '@/lib/types';
+import { ObservationType, MemberVerification } from '@/lib/types';
 import { OBSERVATION_TYPES } from '@/lib/constants';
 
 const TYPE_ICONS: Record<ObservationType, string> = {
@@ -12,9 +12,11 @@ const TYPE_ICONS: Record<ObservationType, string> = {
 interface Props {
   selected: ObservationType | null;
   onSelect: (type: ObservationType) => void;
+  memberVerification?: MemberVerification | null;
 }
 
-export default function TypeSelector({ selected, onSelect }: Props) {
+export default function TypeSelector({ selected, onSelect, memberVerification }: Props) {
+  const isMemberVerified = memberVerification?.member_type === 'member';
   return (
     <div className="space-y-3">
       <h2 className="text-lg font-bold text-gray-900">참관 유형을 선택하세요</h2>
@@ -26,7 +28,7 @@ export default function TypeSelector({ selected, onSelect }: Props) {
         {(Object.entries(OBSERVATION_TYPES) as [ObservationType, typeof OBSERVATION_TYPES[ObservationType]][]).map(
           ([type, info]) => {
             const isSelected = selected === type;
-            const isDisabled = type === 'early' || type === 'counting';
+            const isDisabled = type === 'early' || (type === 'counting' && !isMemberVerified);
             return (
               <button
                 key={type}
@@ -49,7 +51,7 @@ export default function TypeSelector({ selected, onSelect }: Props) {
                       5/15 후보등록 이후 모집 여부를 검토하여 안내드립니다. 선관위 추첨이 필요할 수 있습니다.
                     </div>
                   )}
-                  {type === 'counting' && (
+                  {type === 'counting' && !isMemberVerified && (
                     <div className="text-xs text-orange-600 mt-1">
                       개표참관인은 별도 모집합니다. 담당자에게 문의해주세요.
                     </div>
