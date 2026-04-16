@@ -26,7 +26,7 @@ export default function TypeSelector({ selected, onSelect }: Props) {
         {(Object.entries(OBSERVATION_TYPES) as [ObservationType, typeof OBSERVATION_TYPES[ObservationType]][]).map(
           ([type, info]) => {
             const isSelected = selected === type;
-            const isDisabled = type === 'early';
+            const isDisabled = type === 'early' || type === 'counting';
             return (
               <button
                 key={type}
@@ -44,9 +44,14 @@ export default function TypeSelector({ selected, onSelect }: Props) {
                 <div>
                   <div className="font-semibold text-gray-900">{info.label}</div>
                   <div className="text-sm text-gray-500">{info.description}</div>
-                  {isDisabled && (
+                  {type === 'early' && (
                     <div className="text-xs text-orange-600 mt-1">
                       5/15 후보등록 이후 모집 여부를 검토하여 안내드립니다. 선관위 추첨이 필요할 수 있습니다.
+                    </div>
+                  )}
+                  {type === 'counting' && (
+                    <div className="text-xs text-orange-600 mt-1">
+                      개표참관인은 별도 모집합니다. 담당자에게 문의해주세요.
                     </div>
                   )}
                 </div>
