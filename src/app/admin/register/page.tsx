@@ -229,18 +229,27 @@ export default function AdminRegisterPage() {
 
           {SLOT_CONFIGS.map(config => {
             const slot = slots[config.key];
+            const isEarlyDisabled = config.type === 'early';
             const { sigunguList, stations } = getStationsForSlot(config);
             const selectedStation = stations.find(s => s.id === slot.stationId);
 
             return (
-              <div key={config.key} className={`bg-white border rounded-xl overflow-hidden ${slot.enabled ? 'border-yellow-400' : ''}`}>
+              <div key={config.key} className={`bg-white border rounded-xl overflow-hidden ${isEarlyDisabled ? 'opacity-60' : slot.enabled ? 'border-yellow-400' : ''}`}>
                 <button type="button"
-                  onClick={() => updateSlot(config.key, { enabled: !slot.enabled, sigungu: '', stationId: '', timeSlot: '' })}
-                  className="w-full px-4 py-3 flex items-center justify-between text-left">
-                  <span className={`text-sm font-bold ${slot.enabled ? 'text-yellow-700' : 'text-gray-500'}`}>{config.label}</span>
-                  <div className={`w-10 h-6 rounded-full transition-colors flex items-center ${slot.enabled ? 'bg-yellow-400 justify-end' : 'bg-gray-200 justify-start'}`}>
-                    <div className="w-5 h-5 bg-white rounded-full shadow mx-0.5" />
+                  disabled={isEarlyDisabled}
+                  onClick={() => !isEarlyDisabled && updateSlot(config.key, { enabled: !slot.enabled, sigungu: '', stationId: '', timeSlot: '' })}
+                  className={`w-full px-4 py-3 flex items-center justify-between text-left ${isEarlyDisabled ? 'cursor-not-allowed' : ''}`}>
+                  <div>
+                    <span className={`text-sm font-bold ${isEarlyDisabled ? 'text-gray-400' : slot.enabled ? 'text-yellow-700' : 'text-gray-500'}`}>{config.label}</span>
+                    {isEarlyDisabled && (
+                      <p className="text-xs text-orange-600 mt-0.5">5/15 후보등록 이후 모집 여부를 검토하여 안내드립니다.</p>
+                    )}
                   </div>
+                  {!isEarlyDisabled && (
+                    <div className={`w-10 h-6 rounded-full transition-colors flex items-center ${slot.enabled ? 'bg-yellow-400 justify-end' : 'bg-gray-200 justify-start'}`}>
+                      <div className="w-5 h-5 bg-white rounded-full shadow mx-0.5" />
+                    </div>
+                  )}
                 </button>
 
                 {slot.enabled && (
