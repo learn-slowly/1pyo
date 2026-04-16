@@ -26,20 +26,29 @@ export default function TypeSelector({ selected, onSelect }: Props) {
         {(Object.entries(OBSERVATION_TYPES) as [ObservationType, typeof OBSERVATION_TYPES[ObservationType]][]).map(
           ([type, info]) => {
             const isSelected = selected === type;
+            const isDisabled = type === 'early';
             return (
               <button
                 key={type}
-                onClick={() => onSelect(type)}
+                onClick={() => !isDisabled && onSelect(type)}
+                disabled={isDisabled}
                 className={`flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all ${
-                  isSelected
-                    ? 'border-yellow-400 bg-yellow-50'
-                    : 'border-gray-200 bg-white hover:border-yellow-300'
+                  isDisabled
+                    ? 'border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed'
+                    : isSelected
+                      ? 'border-yellow-400 bg-yellow-50'
+                      : 'border-gray-200 bg-white hover:border-yellow-300'
                 }`}
               >
                 <span className="text-3xl">{TYPE_ICONS[type]}</span>
                 <div>
                   <div className="font-semibold text-gray-900">{info.label}</div>
                   <div className="text-sm text-gray-500">{info.description}</div>
+                  {isDisabled && (
+                    <div className="text-xs text-orange-600 mt-1">
+                      5/15 후보등록 이후 모집 여부를 검토하여 안내드립니다. 선관위 추첨이 필요할 수 있습니다.
+                    </div>
+                  )}
                 </div>
               </button>
             );

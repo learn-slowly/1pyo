@@ -56,9 +56,9 @@ const mockEarlyStations: EarlyStation[] = [
 
 // === Mock 개표소 ===
 const mockCountingStations: CountingStation[] = [
-  { id: 'CS-001', sigungu: '진주시', station_name: '진주실내체육관', building_name: '진주실내체육관(지하1층)', address: '진주시 체육로 1', current_count: 2, max_count: 6 },
-  { id: 'CS-002', sigungu: '김해시', station_name: '김해실내체육관', building_name: '김해체육관(1층)', address: '김해시 체육공원로 15', current_count: 6, max_count: 6 },
-  { id: 'CS-003', sigungu: '창원시', station_name: '창원체육관', building_name: '창원컨벤션센터(3층)', address: '창원시 의창구 체육관로 5', current_count: 0, max_count: 6 },
+  { id: 'CS-001', sigungu: '진주시', station_name: '진주실내체육관', building_name: '진주실내체육관(지하1층)', address: '진주시 체육로 1', current_count: 2, max_count: 8 },
+  { id: 'CS-002', sigungu: '김해시', station_name: '김해실내체육관', building_name: '김해체육관(1층)', address: '김해시 체육공원로 15', current_count: 6, max_count: 8 },
+  { id: 'CS-003', sigungu: '창원시', station_name: '창원체육관', building_name: '창원컨벤션센터(3층)', address: '창원시 의창구 체육관로 5', current_count: 0, max_count: 8 },
 ];
 
 // === Mock 당원명단 ===

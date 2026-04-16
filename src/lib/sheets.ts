@@ -197,7 +197,7 @@ function parseStation(row: Record<string, string>, type: ObservationType): Stati
         building_name: row.building_name || '',
         address: row.address,
         current_count: parseInt(row.current_count) || 0,
-        max_count: parseInt(row.max_count) || 6,
+        max_count: parseInt(row.max_count) || 8,
       };
   }
 }
