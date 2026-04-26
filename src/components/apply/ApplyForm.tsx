@@ -100,12 +100,23 @@ export default function ApplyForm() {
   const [guideChecked, setGuideChecked] = useState(false);
   const [isMembersOnlyMode, setIsMembersOnlyMode] = useState(false);
 
-  // 교육 이수 확인 + config 로드
+  // 교육 이수 확인 + config 로드 + 인증 정보 복원
   useEffect(() => {
     if (localStorage.getItem('guide_completed') !== 'true') {
       router.replace('/guide');
     } else {
       setGuideChecked(true);
+    }
+    const saved = localStorage.getItem('member_verification');
+    if (saved) {
+      try {
+        const verification = JSON.parse(saved) as MemberVerification;
+        const verifiedName = localStorage.getItem('verified_name') || undefined;
+        dispatch({
+          type: 'SET_MEMBER_VERIFIED',
+          payload: { verification, name: verifiedName },
+        });
+      } catch { /* ignore */ }
     }
     fetch('/api/config')
       .then(res => res.json())
@@ -251,7 +262,6 @@ export default function ApplyForm() {
         <TypeSelector
           selected={state.observationType}
           onSelect={(type) => dispatch({ type: 'SELECT_TYPE', payload: type })}
-          memberVerification={state.memberVerification}
         />
       )}
 

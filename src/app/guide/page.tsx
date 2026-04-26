@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { Config, CandidateInfo } from '@/lib/types';
+import type { Config, CandidateInfo, MemberVerification } from '@/lib/types';
+import MemberVerificationForm from '@/components/apply/MemberVerificationForm';
 
 // 퀴즈 데이터
 const quizzes = [
@@ -486,6 +487,8 @@ export default function GuidePage() {
   const [disqualifyConfirmed, setDisqualifyConfirmed] = useState(false);
   const [config, setConfig] = useState<Config | null>(null);
   const [candidates, setCandidates] = useState<CandidateInfo[]>([]);
+  const [memberVerification, setMemberVerification] = useState<MemberVerification | null>(null);
+  const [verificationPhase, setVerificationPhase] = useState(false);
 
   // 설정 + 후보정보 로드
   useEffect(() => {
@@ -494,22 +497,53 @@ export default function GuidePage() {
       .then(data => {
         setConfig(data.config);
         setCandidates(data.candidates);
+        // members_only 모드면 인증 필요 여부 확인
+        if (data.config?.mode === 'members_only') {
+          const saved = localStorage.getItem('member_verification');
+          if (saved) {
+            try { setMemberVerification(JSON.parse(saved)); } catch { /* ignore */ }
+          } else {
+            setVerificationPhase(true);
+          }
+        }
       })
       .catch(console.error);
   }, []);
 
-  // 이미 이수한 경우
+  // 이미 이수한 경우 + 인증 정보 복원
   useEffect(() => {
     if (localStorage.getItem('guide_completed') === 'true') {
       setQuizPassed(true);
     }
+    const saved = localStorage.getItem('member_verification');
+    if (saved) {
+      try { setMemberVerification(JSON.parse(saved)); } catch { /* ignore */ }
+    }
   }, []);
 
-  const isQuizStep = step === TOTAL_STEPS - 1;
+  // 당원/당원지인 인증 시 퀴즈 스킵
+  const skipQuiz = memberVerification !== null;
+  const effectiveTotalSteps = skipQuiz ? TOTAL_STEPS - 1 : TOTAL_STEPS;
+  const effectiveStepTitles = skipQuiz ? STEP_TITLES.slice(0, -1) : STEP_TITLES;
+  const isQuizStep = !skipQuiz && step === TOTAL_STEPS - 1;
+  const isLastStep = step === effectiveTotalSteps - 1;
 
   const handleQuizPass = () => {
     localStorage.setItem('guide_completed', 'true');
     setQuizPassed(true);
+  };
+
+  const handleMemberVerified = (verification: MemberVerification, name?: string) => {
+    setMemberVerification(verification);
+    setVerificationPhase(false);
+    localStorage.setItem('member_verification', JSON.stringify(verification));
+    if (name) localStorage.setItem('verified_name', name);
+  };
+
+  const handleGuideComplete = () => {
+    localStorage.setItem('guide_completed', 'true');
+    setQuizPassed(true);
+    router.push('/apply');
   };
 
   const goNext = () => {
@@ -521,6 +555,33 @@ export default function GuidePage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setStep(s => s - 1);
   };
+
+  // members_only 모드: 인증 단계
+  if (verificationPhase) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="text-center mb-6">
+          <Link href="/" className="text-sm text-gray-400 hover:text-gray-600">← 홈으로</Link>
+          <h1 className="text-2xl font-bold text-gray-900 mt-2">투개표 참관인 교육자료</h1>
+          <p className="text-sm text-gray-500 mt-1">2026한표</p>
+        </div>
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-700">
+          현재 당원/당원지인 전용 모드입니다. 인증 후 교육자료를 확인하실 수 있습니다.
+        </div>
+        <MemberVerificationForm onVerified={handleMemberVerified} />
+        {config && (
+          <div className="text-center text-xs text-gray-400 space-y-0.5 mt-8 mb-4">
+            {config.contacts.map((c, i) => (
+              <p key={i}>{c.label}: {c.number} (문자만 가능)</p>
+            ))}
+            {config.contact_notice && (
+              <p className="mt-1">* {config.contact_notice}</p>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
@@ -534,7 +595,7 @@ export default function GuidePage() {
       {/* 진행 바 */}
       <div className="mb-6">
         <div className="flex items-center gap-1 mb-2">
-          {STEP_TITLES.map((_, i) => (
+          {effectiveStepTitles.map((_, i) => (
             <div
               key={i}
               className={`flex-1 h-1.5 rounded-full transition-colors ${
@@ -544,7 +605,7 @@ export default function GuidePage() {
           ))}
         </div>
         <p className="text-xs text-gray-500 text-center">
-          {step + 1} / {TOTAL_STEPS} — {STEP_TITLES[step]}
+          {step + 1} / {effectiveTotalSteps} — {STEP_TITLES[step]}
         </p>
       </div>
 
@@ -585,7 +646,23 @@ export default function GuidePage() {
             이전
           </button>
         )}
-        {!isQuizStep ? (
+        {isQuizStep ? (
+          quizPassed ? (
+            <button
+              onClick={() => router.push('/apply')}
+              className="flex-1 py-3 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition-colors"
+            >
+              참관인 신청하기
+            </button>
+          ) : null
+        ) : isLastStep && skipQuiz ? (
+          <button
+            onClick={handleGuideComplete}
+            className="flex-1 py-3 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition-colors"
+          >
+            참관인 신청하기
+          </button>
+        ) : (
           <button
             onClick={goNext}
             disabled={step === 1 && !disqualifyConfirmed}
@@ -593,14 +670,7 @@ export default function GuidePage() {
           >
             확인했습니다
           </button>
-        ) : quizPassed ? (
-          <button
-            onClick={() => router.push('/apply')}
-            className="flex-1 py-3 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition-colors"
-          >
-            참관인 신청하기
-          </button>
-        ) : null}
+        )}
       </div>
 
       {/* 문의 안내 */}
