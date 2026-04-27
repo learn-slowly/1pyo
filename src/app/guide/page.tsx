@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Config, CandidateInfo, MemberVerification } from '@/lib/types';
+import { loadMemberVerification, saveMemberVerification } from '@/lib/memberAuth';
 import MemberVerificationForm from '@/components/apply/MemberVerificationForm';
 
 // 퀴즈 데이터
@@ -499,9 +500,9 @@ export default function GuidePage() {
         setCandidates(data.candidates);
         // members_only 모드면 인증 필요 여부 확인
         if (data.config?.mode === 'members_only') {
-          const saved = localStorage.getItem('member_verification');
+          const saved = loadMemberVerification();
           if (saved) {
-            try { setMemberVerification(JSON.parse(saved)); } catch { /* ignore */ }
+            setMemberVerification(saved.verification);
           } else {
             setVerificationPhase(true);
           }
@@ -515,9 +516,9 @@ export default function GuidePage() {
     if (localStorage.getItem('guide_completed') === 'true') {
       setQuizPassed(true);
     }
-    const saved = localStorage.getItem('member_verification');
+    const saved = loadMemberVerification();
     if (saved) {
-      try { setMemberVerification(JSON.parse(saved)); } catch { /* ignore */ }
+      setMemberVerification(saved.verification);
     }
   }, []);
 
@@ -536,8 +537,7 @@ export default function GuidePage() {
   const handleMemberVerified = (verification: MemberVerification, name?: string) => {
     setMemberVerification(verification);
     setVerificationPhase(false);
-    localStorage.setItem('member_verification', JSON.stringify(verification));
-    if (name) localStorage.setItem('verified_name', name);
+    saveMemberVerification(verification, name);
   };
 
   const handleGuideComplete = () => {

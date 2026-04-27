@@ -3,6 +3,7 @@
 import { useReducer, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { FormState, ObservationType, Station, StationsResponse, ApplicationResponse, MemberVerification } from '@/lib/types';
+import { loadMemberVerification, clearMemberVerification } from '@/lib/memberAuth';
 import TypeSelector from './TypeSelector';
 import SigunguSelector from './SigunguSelector';
 import StationList from './StationList';
@@ -107,16 +108,12 @@ export default function ApplyForm() {
     } else {
       setGuideChecked(true);
     }
-    const saved = localStorage.getItem('member_verification');
+    const saved = loadMemberVerification();
     if (saved) {
-      try {
-        const verification = JSON.parse(saved) as MemberVerification;
-        const verifiedName = localStorage.getItem('verified_name') || undefined;
-        dispatch({
-          type: 'SET_MEMBER_VERIFIED',
-          payload: { verification, name: verifiedName },
-        });
-      } catch { /* ignore */ }
+      dispatch({
+        type: 'SET_MEMBER_VERIFIED',
+        payload: { verification: saved.verification, name: saved.name },
+      });
     }
     fetch('/api/config', { cache: 'no-store' })
       .then(res => res.json())
@@ -190,6 +187,12 @@ export default function ApplyForm() {
   const isMembersOnly = stationsData?.config.mode === 'members_only';
   const needsMemberVerification = isMembersOnly && !state.memberVerified;
 
+  const switchApplicant = useCallback(() => {
+    clearMemberVerification();
+    setStationsData(null);
+    dispatch({ type: 'RESET' });
+  }, []);
+
   const stepLabels = ['유형 선택', '지역 선택', '투표소 선택', '시간대 선택', '정보 입력'];
 
   if (!guideChecked) {
@@ -203,6 +206,19 @@ export default function ApplyForm() {
         <h1 className="text-2xl font-bold text-gray-900">참관인 신청</h1>
         <p className="text-sm text-gray-500 mt-1">2026한표</p>
       </div>
+
+      {/* 다른 사람으로 신청 (인증된 상태에서 같은 기기 다른 사용자 처리용) */}
+      {state.step < 6 && state.memberVerified && isMembersOnlyMode && (
+        <div className="mb-4 flex justify-end">
+          <button
+            type="button"
+            onClick={switchApplicant}
+            className="text-xs text-gray-500 hover:text-gray-700 underline underline-offset-2"
+          >
+            다른 사람으로 신청하기
+          </button>
+        </div>
+      )}
 
       {/* 진행 단계 */}
       {state.step < 6 && (
@@ -322,7 +338,7 @@ export default function ApplyForm() {
           station={state.selectedStation}
           timeSlot={state.timeSlot}
           name={state.name}
-          onReset={() => dispatch({ type: 'RESET' })}
+          onReset={switchApplicant}
         />
       )}
 
