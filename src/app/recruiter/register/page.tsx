@@ -82,7 +82,7 @@ export default function RecruiterRegisterPage() {
   useEffect(() => {
     const types: ObservationType[] = ['early', 'polling', 'counting'];
     Promise.all(
-      types.map(t => fetch(`/api/stations?type=${t}`).then(r => r.json()).then(d => ({ type: t, data: d as StationsResponse })))
+      types.map(t => fetch(`/api/stations?type=${t}`, { cache: 'no-store' }).then(r => r.json()).then(d => ({ type: t, data: d as StationsResponse })))
     ).then(results => {
       const map: Record<string, StationsResponse> = {};
       for (const r of results) map[r.type] = r.data;

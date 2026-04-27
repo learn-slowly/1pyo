@@ -118,7 +118,7 @@ export default function ApplyForm() {
         });
       } catch { /* ignore */ }
     }
-    fetch('/api/config')
+    fetch('/api/config', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (data.config?.mode === 'members_only') setIsMembersOnlyMode(true);
@@ -134,7 +134,7 @@ export default function ApplyForm() {
     const params = new URLSearchParams({ type: state.observationType });
     if (state.sigungu) params.set('sigungu', state.sigungu);
 
-    fetch(`/api/stations?${params}`)
+    fetch(`/api/stations?${params}`, { cache: 'no-store' })
       .then(res => res.json())
       .then(data => setStationsData(data))
       .catch(() => dispatch({ type: 'SET_ERROR', payload: '데이터를 불러오지 못했습니다.' }))

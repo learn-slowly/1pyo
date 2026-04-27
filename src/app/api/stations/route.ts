@@ -31,7 +31,10 @@ export async function GET(request: NextRequest) {
     ]);
 
     const { password, ...safeConfig } = config;
-    return NextResponse.json({ stations, sigunguList, config: safeConfig });
+    return NextResponse.json(
+      { stations, sigunguList, config: safeConfig },
+      { headers: { 'Cache-Control': 'no-store, max-age=0, must-revalidate' } },
+    );
   } catch (error) {
     console.error('stations API error:', error);
     return NextResponse.json(

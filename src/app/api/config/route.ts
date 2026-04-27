@@ -9,7 +9,10 @@ export async function GET() {
     ]);
 
     const { password, ...safeConfig } = config;
-    return NextResponse.json({ config: safeConfig, candidates });
+    return NextResponse.json(
+      { config: safeConfig, candidates },
+      { headers: { 'Cache-Control': 'no-store, max-age=0, must-revalidate' } },
+    );
   } catch (err) {
     console.error('Config fetch error:', err);
     return NextResponse.json(

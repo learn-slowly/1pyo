@@ -49,7 +49,7 @@ export default function RecruiterVacanciesPage() {
     try {
       const params = new URLSearchParams({ type });
       if (sigungu) params.set('sigungu', sigungu);
-      const res = await fetch(`/api/stations?${params}`);
+      const res = await fetch(`/api/stations?${params}`, { cache: 'no-store' });
       const data = await res.json();
       setStations(data.stations || []);
       setSigunguList(data.sigunguList || []);
