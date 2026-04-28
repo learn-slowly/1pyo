@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import type { Station } from '@/lib/types';
 
 const TYPE_OPTIONS = [
@@ -8,23 +9,23 @@ const TYPE_OPTIONS = [
   { value: 'counting', label: '개표' },
 ] as const;
 
-function getSlotInfo(station: Station): { label: string; count: number; max: number }[] {
+function getSlotInfo(station: Station): { label: string; value: string; count: number; max: number }[] {
   switch (station.type) {
     case 'polling':
       return [
-        { label: '오전', count: station.am_count, max: station.am_max },
-        { label: '오후', count: station.pm_count, max: station.pm_max },
+        { label: '오전', value: 'am', count: station.am_count, max: station.am_max },
+        { label: '오후', value: 'pm', count: station.pm_count, max: station.pm_max },
       ];
     case 'early':
       return [
-        { label: '5/29 오전', count: station.d1_am_count, max: station.slot_max },
-        { label: '5/29 오후', count: station.d1_pm_count, max: station.slot_max },
-        { label: '5/30 오전', count: station.d2_am_count, max: station.slot_max },
-        { label: '5/30 오후', count: station.d2_pm_count, max: station.slot_max },
+        { label: '5/29 오전', value: 'd1_am', count: station.d1_am_count, max: station.slot_max },
+        { label: '5/29 오후', value: 'd1_pm', count: station.d1_pm_count, max: station.slot_max },
+        { label: '5/30 오전', value: 'd2_am', count: station.d2_am_count, max: station.slot_max },
+        { label: '5/30 오후', value: 'd2_pm', count: station.d2_pm_count, max: station.slot_max },
       ];
     case 'counting':
       return [
-        { label: '전체', count: station.current_count, max: station.max_count },
+        { label: '전체', value: 'all', count: station.current_count, max: station.max_count },
       ];
   }
 }
@@ -133,12 +134,27 @@ export default function RecruiterVacanciesPage() {
                       <div className="flex flex-wrap gap-2">
                         {slots.map((slot) => {
                           const full = slot.max - slot.count <= 0;
+                          if (full) {
+                            return (
+                              <span key={slot.label} className="text-xs font-bold px-2.5 py-1 rounded-lg bg-gray-100 text-gray-400">
+                                {slot.label} {slot.count}/{slot.max}
+                              </span>
+                            );
+                          }
+                          const params = new URLSearchParams({
+                            type: station.type,
+                            station_id: station.id,
+                            time_slot: slot.value,
+                            sigungu: station.sigungu,
+                          });
                           return (
-                            <span key={slot.label} className={`text-xs font-bold px-2.5 py-1 rounded-lg ${
-                              full ? 'bg-gray-100 text-gray-400' : 'bg-green-50 text-green-700'
-                            }`}>
-                              {slot.label} {slot.count}/{slot.max}
-                            </span>
+                            <Link
+                              key={slot.label}
+                              href={`/recruiter/register?${params}`}
+                              className="text-xs font-bold px-2.5 py-1 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
+                            >
+                              {slot.label} {slot.count}/{slot.max} +
+                            </Link>
                           );
                         })}
                       </div>

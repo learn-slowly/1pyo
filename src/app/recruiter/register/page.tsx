@@ -91,6 +91,26 @@ export default function RecruiterRegisterPage() {
     });
   }, []);
 
+  // 빈자리 페이지에서 슬롯을 클릭하고 진입한 경우 자동 선택
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get('type') as ObservationType | null;
+    const stationId = params.get('station_id');
+    const timeSlot = params.get('time_slot');
+    const sigungu = params.get('sigungu') || '';
+    if (!type || !stationId || !timeSlot) return;
+
+    const matched = SLOT_CONFIGS.find(
+      c => c.type === type && c.timeSlots.some(ts => ts.value === timeSlot),
+    );
+    if (!matched) return;
+
+    setSlots(prev => ({
+      ...prev,
+      [matched.key]: { enabled: true, sigungu, stationId, timeSlot },
+    }));
+  }, []);
+
   // 카카오 우편번호
   useEffect(() => {
     if (document.getElementById('daum-postcode')) return;
