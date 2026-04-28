@@ -279,7 +279,7 @@ function getDayGroup(timeSlot: string): string {
 // === Applications ===
 export async function submitApplication(
   data: ApplicationRequest,
-  options?: { skipBlacklist?: boolean; skipDuplicateCheck?: boolean; notes?: string; recruiter?: string },
+  options?: { skipBlacklist?: boolean; skipDuplicateCheck?: boolean; notes?: string; recruiter?: string; memo?: string },
 ): Promise<{ success: boolean; id: string; status: string; message: string }> {
   if (useMock) return (await getMock()).submitApplication(data);
 
@@ -422,6 +422,8 @@ export async function submitApplication(
     notes,                // O: 비고
   ];
 
+  const memo = options?.memo || '';
+
   if (targetRowIdx !== -1) {
     // 기존 빈 행에 채우기 (D~O열)
     const rowNum = targetRowIdx + 1; // 1-based
@@ -431,12 +433,12 @@ export async function submitApplication(
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: [applicantData] },
     });
-    // T~W열 (신청ID, timestamp, status, 모집책/추천인)
+    // T~X열 (신청ID, timestamp, status, 모집책/추천인, 메모)
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: `${applicantSheet}!T${rowNum}:W${rowNum}`,
+      range: `${applicantSheet}!T${rowNum}:X${rowNum}`,
       valueInputOption: 'USER_ENTERED',
-      requestBody: { values: [[id, new Date().toISOString(), status, referrerCol]] },
+      requestBody: { values: [[id, new Date().toISOString(), status, referrerCol, memo]] },
     });
   } else {
     // 추첨: 맨 아래에 새 행 추가
@@ -446,14 +448,14 @@ export async function submitApplication(
 
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: `${applicantSheet}!A:W`,
+      range: `${applicantSheet}!A:X`,
       valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: [[
           '', '', timeCode,
           ...applicantData,
           data.station_id, data.time_slot, data.station_name, data.sigungu,
-          id, new Date().toISOString(), status, referrerCol,
+          id, new Date().toISOString(), status, referrerCol, memo,
         ]],
       },
     });

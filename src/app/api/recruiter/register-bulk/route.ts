@@ -21,6 +21,7 @@ const bulkSchema = z.object({
   address_detail: z.string().optional().default(''),
   occupation: z.string().min(1).max(20),
   account: z.string().min(2).max(40),
+  memo: z.string().max(200).optional().default(''),
   slots: z.array(slotSchema).min(1).max(4),
 });
 
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: firstError.message }, { status: 400 });
     }
 
-    const { slots, ...applicantInfo } = parsed.data;
+    const { slots, memo, ...applicantInfo } = parsed.data;
     const results: { type: string; time_slot: string; station_name: string; success: boolean; message: string }[] = [];
 
     for (const slot of slots) {
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
           skipDuplicateCheck: true,
           notes: `모집:${recruiterName}`,
           recruiter: recruiterName,
+          memo,
         },
       );
       results.push({

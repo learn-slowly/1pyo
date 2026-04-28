@@ -18,6 +18,7 @@ interface Applicant {
   timeSlotLabel: string;
   timestamp: string;
   status: string;
+  memo: string;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -61,6 +62,25 @@ export default function RecruiterListPage() {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  const handleMemoSave = async (app: Applicant, newMemo: string) => {
+    if (newMemo === (app.memo || '')) return;
+    try {
+      const res = await fetch('/api/recruiter/applicants', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sheetName: app.sheetName, rowIndex: app.rowIndex, memo: newMemo }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setApplicants(prev => prev.map(a =>
+          a.sheetName === app.sheetName && a.rowIndex === app.rowIndex ? { ...a, memo: newMemo } : a
+        ));
+      } else {
+        alert(data.message || '메모 저장에 실패했습니다.');
+      }
+    } catch { alert('메모 저장 중 오류가 발생했습니다.'); }
+  };
 
   const handleDelete = async (app: Applicant) => {
     if (!confirm(`${app.name}님의 ${app.typeLabel} 신청을 삭제하시겠습니까?`)) return;
@@ -159,6 +179,7 @@ export default function RecruiterListPage() {
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">시간대</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">상태</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">신청일</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">비고</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">관리</th>
               </tr>
             </thead>
@@ -184,6 +205,16 @@ export default function RecruiterListPage() {
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-gray-500 text-xs">
                     {app.timestamp ? new Date(app.timestamp).toLocaleDateString('ko-KR') : ''}
+                  </td>
+                  <td className="px-3 py-2">
+                    <input
+                      type="text"
+                      defaultValue={app.memo}
+                      onBlur={(e) => handleMemoSave(app, e.target.value.slice(0, 200))}
+                      maxLength={200}
+                      placeholder="메모..."
+                      className="w-40 px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-yellow-400 bg-white"
+                    />
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     <button

@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     const responses = await Promise.all(
       sheetsToQuery.map(s =>
-        sheets.spreadsheets.values.get({ spreadsheetId, range: `${s.name}!A:W` })
+        sheets.spreadsheets.values.get({ spreadsheetId, range: `${s.name}!A:X` })
           .then(res => ({ sheet: s, rows: res.data.values || [] }))
       )
     );
@@ -94,6 +94,7 @@ export async function GET(request: NextRequest) {
             status: status || 'applied',
             notes: row[14] || '',
             recruiter: row[22] || '',
+            memo: row[23] || '',
           });
         }
         stats.totalSlots++;
@@ -116,28 +117,39 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 상태 변경
+// 상태 또는 메모 변경
 export async function PATCH(request: NextRequest) {
   try {
-    const { sheetName, rowIndex, status } = await request.json();
-    if (!sheetName || !rowIndex || !status) {
+    const { sheetName, rowIndex, status, memo } = await request.json();
+    if (!sheetName || !rowIndex || (status === undefined && memo === undefined)) {
       return NextResponse.json({ success: false, message: '필수 정보가 누락되었습니다.' }, { status: 400 });
     }
 
     const sheets = await getSheetsClient();
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID!;
 
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: `${sheetName}!V${rowIndex}`,
-      valueInputOption: 'RAW',
-      requestBody: { values: [[status]] },
-    });
+    if (status !== undefined) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `${sheetName}!V${rowIndex}`,
+        valueInputOption: 'RAW',
+        requestBody: { values: [[status]] },
+      });
+    }
+
+    if (memo !== undefined) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `${sheetName}!X${rowIndex}`,
+        valueInputOption: 'RAW',
+        requestBody: { values: [[memo]] },
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('admin status change error:', error);
-    return NextResponse.json({ success: false, message: '상태 변경 중 오류가 발생했습니다.' }, { status: 500 });
+    console.error('admin patch error:', error);
+    return NextResponse.json({ success: false, message: '변경 중 오류가 발생했습니다.' }, { status: 500 });
   }
 }
 
@@ -160,12 +172,12 @@ export async function DELETE(request: NextRequest) {
       requestBody: { values: [['', '', '', '', '', '', '', '', '', '', '', '']] },
     });
 
-    // T~W열 (관리용) 클리어
+    // T~X열 (관리용) 클리어
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: `${sheetName}!T${rowIndex}:W${rowIndex}`,
+      range: `${sheetName}!T${rowIndex}:X${rowIndex}`,
       valueInputOption: 'RAW',
-      requestBody: { values: [['', '', '', '']] },
+      requestBody: { values: [['', '', '', '', '']] },
     });
 
     // 좌석 카운트 감소

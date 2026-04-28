@@ -64,6 +64,7 @@ export default function RecruiterRegisterPage() {
   const [occupation, setOccupation] = useState('');
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
+  const [memo, setMemo] = useState('');
 
   // 슬롯 선택 (4개)
   const [slots, setSlots] = useState<Record<string, SlotSelection>>({
@@ -129,7 +130,7 @@ export default function RecruiterRegisterPage() {
   const resetForm = () => {
     setName(''); setPhone(''); setBirthDate(''); setGender('');
     setZipCode(''); setAddress(''); setAddressDetail('');
-    setOccupation(''); setBankName(''); setAccountNumber('');
+    setOccupation(''); setBankName(''); setAccountNumber(''); setMemo('');
     setSlots({ early_d1: emptySlot(), early_d2: emptySlot(), polling: emptySlot(), counting: emptySlot() });
   };
 
@@ -178,6 +179,7 @@ export default function RecruiterRegisterPage() {
           name, phone, birth_date: birthDate, gender,
           zip_code: zipCode, address, address_detail: addressDetail,
           occupation, account: `${bankName.trim()} ${accountNumber.trim()}`,
+          memo: memo.trim(),
           slots: slotData,
         }),
       });
@@ -237,6 +239,9 @@ export default function RecruiterRegisterPage() {
             <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)}
               placeholder="계좌번호 *" className="p-2 border rounded-lg text-sm" maxLength={30} />
           </div>
+          <textarea value={memo} onChange={(e) => setMemo(e.target.value.slice(0, 200))}
+            placeholder="비고 (선택, 200자 이내)" rows={2}
+            className="w-full p-2 border rounded-lg text-sm resize-none" />
         </div>
 
         {/* 참관 유형 선택 */}

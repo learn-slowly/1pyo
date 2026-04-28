@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     const responses = await Promise.all(
       SHEETS.map(s =>
-        sheets.spreadsheets.values.get({ spreadsheetId, range: `${s.name}!A:W` })
+        sheets.spreadsheets.values.get({ spreadsheetId, range: `${s.name}!A:X` })
           .then(res => ({ sheet: s, rows: res.data.values || [] }))
       )
     );
@@ -82,6 +82,7 @@ export async function GET(request: NextRequest) {
           timeSlotLabel: TIME_SLOT_LABELS[timeSlot] || timeSlot,
           timestamp: row[20] || '',
           status: row[21] || 'applied',
+          memo: row[23] || '',
         });
       }
     }
@@ -101,5 +102,55 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('recruiter applicants error:', error);
     return NextResponse.json({ success: false, message: '데이터 조회 중 오류가 발생했습니다.' }, { status: 500 });
+  }
+}
+
+// 메모 수정 (본인이 모집한 신청자 한정)
+export async function PATCH(request: NextRequest) {
+  try {
+    const token = request.cookies.get('recruiter_token')?.value;
+    if (!token) {
+      return NextResponse.json({ success: false, message: '인증이 필요합니다.' }, { status: 401 });
+    }
+
+    const { valid, recruiterName } = verifyRecruiterToken(token);
+    if (!valid) {
+      return NextResponse.json({ success: false, message: '인증이 만료되었습니다.' }, { status: 401 });
+    }
+
+    const { sheetName, rowIndex, memo } = await request.json();
+    if (!sheetName || !rowIndex || memo === undefined) {
+      return NextResponse.json({ success: false, message: '필수 정보가 누락되었습니다.' }, { status: 400 });
+    }
+    if (typeof memo !== 'string' || memo.length > 200) {
+      return NextResponse.json({ success: false, message: '메모는 200자 이내여야 합니다.' }, { status: 400 });
+    }
+
+    const sheets = await getSheetsClient();
+    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID!;
+
+    // 권한 확인: O열(notes) 또는 W열(모집책)에 본인 이름이 있어야 함
+    const ownerRes = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${sheetName}!O${rowIndex}:W${rowIndex}`,
+    });
+    const ownerRow = ownerRes.data.values?.[0] || [];
+    const notes = (ownerRow[0] || '').trim();
+    const recruiterCol = (ownerRow[8] || '').trim();
+    if (recruiterCol !== recruiterName && !notes.includes(`모집:${recruiterName}`)) {
+      return NextResponse.json({ success: false, message: '본인이 등록한 건만 수정할 수 있습니다.' }, { status: 403 });
+    }
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `${sheetName}!X${rowIndex}`,
+      valueInputOption: 'RAW',
+      requestBody: { values: [[memo]] },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('recruiter memo update error:', error);
+    return NextResponse.json({ success: false, message: '메모 변경 중 오류가 발생했습니다.' }, { status: 500 });
   }
 }

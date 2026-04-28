@@ -52,12 +52,12 @@ export async function POST(request: NextRequest) {
       requestBody: { values: [['', '', '', '', '', '', '', '', '', '', '', '']] },
     });
 
-    // T~W열 클리어
+    // T~X열 클리어
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: `${sheetName}!T${rowIndex}:W${rowIndex}`,
+      range: `${sheetName}!T${rowIndex}:X${rowIndex}`,
       valueInputOption: 'RAW',
-      requestBody: { values: [['', '', '', '']] },
+      requestBody: { values: [['', '', '', '', '']] },
     });
 
     // 좌석 카운트 감소

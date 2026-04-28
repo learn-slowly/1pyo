@@ -22,6 +22,7 @@ interface Applicant {
   status: string;
   notes: string;
   recruiter: string;
+  memo: string;
 }
 
 interface Stats {
@@ -79,6 +80,23 @@ export default function DashboardPage() {
   }, [filterType, filterSigungu, filterStatus]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handleMemoSave = async (app: Applicant, newMemo: string) => {
+    if (newMemo === (app.memo || '')) return;
+    try {
+      const res = await fetch('/api/admin/applicants', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sheetName: app.sheetName, rowIndex: app.rowIndex, memo: newMemo }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setApplicants(prev => prev.map(a =>
+          a.sheetName === app.sheetName && a.rowIndex === app.rowIndex ? { ...a, memo: newMemo } : a
+        ));
+      }
+    } catch { /* ignore */ }
+  };
 
   const handleStatusChange = async (app: Applicant, newStatus: string) => {
     setActionLoading(app.applicationId);
@@ -179,6 +197,7 @@ export default function DashboardPage() {
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">시간대</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">모집책</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">상태</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">비고</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">관리</th>
               </tr>
             </thead>
@@ -202,6 +221,16 @@ export default function DashboardPage() {
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[app.status] || 'bg-gray-100 text-gray-600'}`}>
                       {STATUS_LABELS[app.status] || app.status}
                     </span>
+                  </td>
+                  <td className="px-3 py-2">
+                    <input
+                      type="text"
+                      defaultValue={app.memo}
+                      onBlur={(e) => handleMemoSave(app, e.target.value.slice(0, 200))}
+                      maxLength={200}
+                      placeholder="메모..."
+                      className="w-40 px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-yellow-400 bg-white"
+                    />
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     <div className="flex gap-1">
