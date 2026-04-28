@@ -76,6 +76,11 @@ export async function getConfig(): Promise<Config> {
     contacts.push({ label, number });
   }
 
+  const blocked_sigungu_public = (configMap.blocked_sigungu_public || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+
   const config: Config = {
     mode: (configMap.mode as Config['mode']) || 'public',
     password: configMap.password,
@@ -86,6 +91,7 @@ export async function getConfig(): Promise<Config> {
     contact_notice: configMap.contact_notice || '',
     guide_intro: configMap.guide_intro || '',
     guide_outro: configMap.guide_outro || '',
+    blocked_sigungu_public,
   };
 
   setCache('config', config);

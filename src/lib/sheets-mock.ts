@@ -25,6 +25,7 @@ const mockConfig: Config = {
   contact_notice: '업무 폭주로 응대가 늦습니다. 불필요한 통화 시도시 신청 반려합니다.',
   guide_intro: '6월 3일 지방선거, 경남에서 정의당에 투표할 수 있는 곳은 다음과 같습니다.',
   guide_outro: '이 소중한 표가 제대로 세어지려면, 우리 눈이 현장에 있어야 합니다. 여러분은 정의당이 파견한, <strong>정의당의 한 표를 지키는 파수꾼</strong>입니다.',
+  blocked_sigungu_public: [],
 };
 
 // === Mock 후보정보 ===

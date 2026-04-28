@@ -41,6 +41,15 @@ export async function POST(request: NextRequest) {
 
     // members_only 모드일 때 서버 측 당원 인증 재확인
     const config = await getConfig();
+
+    // 일반 이용자에게 차단된 시군구는 신청 거부 (관리자·모집책은 별도 엔드포인트 사용)
+    if (config.blocked_sigungu_public.includes(parsed.data.sigungu)) {
+      return NextResponse.json(
+        { success: false, message: '해당 시간대의 정원이 마감되었습니다.' },
+        { status: 410 },
+      );
+    }
+
     if (config.mode === 'members_only') {
       const mv = parsed.data.member_verification;
       if (!mv) {

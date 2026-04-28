@@ -120,6 +120,7 @@ export interface Config {
   contact_notice: string;
   guide_intro: string;
   guide_outro: string;
+  blocked_sigungu_public: string[];
 }
 
 // === 참관 보고 ===
