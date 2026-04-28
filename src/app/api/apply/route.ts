@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { submitApplication, getConfig, verifyMember } from '@/lib/sheets';
+import { submitApplication, getConfig, verifyMember, isSigunguBlockedForPublic } from '@/lib/sheets';
 
 const memberVerificationSchema = z.object({
   member_type: z.enum(['member', 'acquaintance']),
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     const config = await getConfig();
 
     // 일반 이용자에게 차단된 시군구는 신청 거부 (관리자·모집책은 별도 엔드포인트 사용)
-    if (config.blocked_sigungu_public.includes(parsed.data.sigungu)) {
+    if (isSigunguBlockedForPublic(parsed.data.sigungu, config.blocked_sigungu_public)) {
       return NextResponse.json(
         { success: false, message: '해당 시간대의 정원이 마감되었습니다.' },
         { status: 410 },

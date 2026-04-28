@@ -48,6 +48,18 @@ function getSpreadsheetId(): string {
   return id;
 }
 
+// 일반 이용자 차단 시군구 매칭 — 공백 차이를 무시해 시트 표기 불일치를 흡수
+// (예: 설정 "창원시 성산구" ↔ 투표소 시트 "창원시성산구")
+export function isSigunguBlockedForPublic(
+  sigungu: string,
+  blockedList: string[],
+): boolean {
+  const norm = (s: string) => (s || '').replace(/\s+/g, '');
+  const target = norm(sigungu);
+  if (!target) return false;
+  return blockedList.some(b => norm(b) === target);
+}
+
 // === Config ===
 export async function getConfig(): Promise<Config> {
   if (useMock) return (await getMock()).getConfig();

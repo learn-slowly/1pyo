@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getStations, getSigunguList, getConfig } from '@/lib/sheets';
+import { getStations, getSigunguList, getConfig, isSigunguBlockedForPublic } from '@/lib/sheets';
 import { verifyAdminToken, verifyRecruiterToken } from '@/lib/auth';
 import type { Station } from '@/lib/types';
 
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     const stations = isPrivilegedRequest(request)
       ? rawStations
       : rawStations.map(s =>
-          config.blocked_sigungu_public.includes(s.sigungu) ? markStationAsFull(s) : s
+          isSigunguBlockedForPublic(s.sigungu, config.blocked_sigungu_public) ? markStationAsFull(s) : s
         );
 
     const { password, ...safeConfig } = config;
