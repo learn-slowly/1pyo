@@ -75,6 +75,28 @@ export default function RecruitersPage() {
     finally { setActionLoading(null); }
   };
 
+  const handleImpersonate = async (r: Recruiter) => {
+    if (!confirm(`${r.name} 모집책 모드로 전환할까요?\n(관리자 세션은 유지됩니다)`)) return;
+    setActionLoading(r.rowIndex);
+    try {
+      const res = await fetch('/api/admin/recruiters/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: r.name }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        window.location.href = '/recruiter/register';
+      } else {
+        alert(data.message || '전환에 실패했습니다.');
+      }
+    } catch {
+      alert('전환 중 오류가 발생했습니다.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleDelete = async (r: Recruiter) => {
     if (!confirm(`${r.name}님을 삭제하시겠습니까?`)) return;
     setActionLoading(r.rowIndex);
@@ -169,7 +191,15 @@ export default function RecruitersPage() {
               <div className="flex items-center gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-gray-900">{r.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleImpersonate(r)}
+                      disabled={actionLoading === r.rowIndex}
+                      title="이 모집책 모드로 전환"
+                      className="font-bold text-gray-900 hover:text-yellow-600 hover:underline disabled:opacity-50"
+                    >
+                      {r.name}
+                    </button>
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                       r.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                     }`}>
