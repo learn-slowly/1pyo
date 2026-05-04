@@ -39,6 +39,7 @@ interface PersonRow {
   occupation: string;
   account: string;
   relation: string;
+  memo: string;
   slots: Record<string, string>; // colName → stationName
 }
 
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     const responses = await Promise.all(
       SHEETS.map(s =>
-        sheets.spreadsheets.values.get({ spreadsheetId, range: `${s.name}!A:W` })
+        sheets.spreadsheets.values.get({ spreadsheetId, range: `${s.name}!A:X` })
           .then(res => ({ sheet: s, rows: res.data.values || [] }))
       )
     );
@@ -82,6 +83,7 @@ export async function GET(request: NextRequest) {
         const phone = [row[6], row[7], row[8]].filter(Boolean).join('-');
         const timeSlot = row[16] || '';
         const stationName = row[17] || '';
+        const memo = (row[23] || '').trim();
         const colName = SLOT_COL[timeSlot];
         if (!colName) continue;
 
@@ -104,6 +106,7 @@ export async function GET(request: NextRequest) {
             occupation: row[12] || '',
             account: row[13] || '',
             relation,
+            memo,
             slots: {},
           });
         }
@@ -114,11 +117,15 @@ export async function GET(request: NextRequest) {
         if (!person.relation && relation) {
           person.relation = relation;
         }
+        // 비고도 동일하게: 비어있으면 다른 시트에서 채우기, 다르면 합치기
+        if (memo && !person.memo.split(' / ').includes(memo)) {
+          person.memo = person.memo ? `${person.memo} / ${memo}` : memo;
+        }
       }
     }
 
     // 엑셀 데이터 구성
-    const headers = ['이름', '생년월일', '주소', '연락처', '직업', '계좌', ...COL_ORDER, '관계'];
+    const headers = ['이름', '생년월일', '주소', '연락처', '직업', '계좌', ...COL_ORDER, '관계', '비고'];
     const excelRows: string[][] = [headers];
 
     for (const person of personMap.values()) {
@@ -131,6 +138,7 @@ export async function GET(request: NextRequest) {
         person.account,
         ...COL_ORDER.map(col => person.slots[col] || ''),
         person.relation,
+        person.memo,
       ]);
     }
 
@@ -152,6 +160,7 @@ export async function GET(request: NextRequest) {
       { wch: 14 },  // 본투표 오후
       { wch: 14 },  // 개표
       { wch: 12 },  // 관계
+      { wch: 24 },  // 비고
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, '모집현황');
