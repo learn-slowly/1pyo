@@ -6,7 +6,7 @@ Manages observer applications for early voting, election day polling, and vote c
 
 ## Tech Stack
 - Next.js 14+ (App Router) with TypeScript
-- Tailwind CSS with 정의당 yellow (#FFCC00) accent
+- Tailwind CSS with 너랑노랑 (#ffed00) 정의당 브랜드 노랑 accent (yellow palette overridden in globals.css)
 - Google Sheets API v4 as database (service account auth)
 - Deployed on Vercel
 

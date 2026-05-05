@@ -12,6 +12,18 @@
     system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo",
     "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji",
     "Segoe UI Symbol", sans-serif;
+
+  /* 너랑노랑 #ffed00 — 정의당 브랜드 노랑 (연대·공존) */
+  --color-yellow-50: #fffde0;
+  --color-yellow-100: #fffaad;
+  --color-yellow-200: #fff673;
+  --color-yellow-300: #ffef33;
+  --color-yellow-400: #ffed00;
+  --color-yellow-500: #d6c700;
+  --color-yellow-600: #a89c00;
+  --color-yellow-700: #807700;
+  --color-yellow-800: #5c5500;
+  --color-yellow-900: #3d3a00;
 }
 
 body {
