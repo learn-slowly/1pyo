@@ -101,10 +101,16 @@ export default function QuizStep({ onPass }: { onPass: () => void }) {
           const isCorrect = isAnswerCorrect(quiz, selected);
           return (
             <div key={qIdx} className="bg-white border rounded-xl p-4">
-              <div className="flex items-start gap-2 mb-3">
-                <p className="font-medium text-gray-900 flex-1">Q{qIdx + 1}. {quiz.q}</p>
+              <div className="flex items-start gap-3 mb-3">
+                <div
+                  className="shrink-0 w-10 h-10 bg-no-repeat bg-contain bg-center flex items-center justify-center text-white font-bold text-sm"
+                  style={{ backgroundImage: "url('/Vector-s-yellow.svg')" }}
+                >
+                  Q{qIdx + 1}
+                </div>
+                <p className="font-medium text-gray-900 flex-1 pt-2">{quiz.q}</p>
                 {quiz.multi && (
-                  <span className="shrink-0 text-xs font-medium text-yellow-700 bg-yellow-100 border border-yellow-300 rounded-full px-2 py-0.5">
+                  <span className="shrink-0 mt-2 text-xs font-medium text-yellow-700 bg-yellow-100 border border-yellow-300 rounded-full px-2 py-0.5">
                     복수 선택
                   </span>
                 )}
