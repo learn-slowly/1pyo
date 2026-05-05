@@ -8,68 +8,68 @@ import { loadMemberVerification, saveMemberVerification } from '@/lib/memberAuth
 import MemberVerificationForm from '@/components/apply/MemberVerificationForm';
 
 // 퀴즈 데이터
-const quizzes = [
+type Quiz = {
+  q: string;
+  options: string[];
+  answer: number[];
+  multi?: boolean;
+  explanation: string;
+};
+
+const quizzes: Quiz[] = [
   {
-    q: '투표참관인은 투표소에서 유권자에게 특정 후보를 추천할 수 있다?',
-    options: ['가능하다', '불가능하다'],
-    answer: 1,
-    explanation: '투표에 간섭하거나 투표를 권유하는 행위, 어떠한 방법으로든 선거에 영향을 미치는 행위는 금지됩니다.',
-  },
-  {
-    q: '개표참관인이 개표 상황을 촬영할 수 있는 시점은?',
-    options: ['사고가 발생했을 때만', '선관위 허가를 받았을 때', '언제든지 가능', '절대 불가'],
-    answer: 2,
-    explanation: '개표참관인은 개표소 안에서 개표상황을 언제든지 순회·감시 또는 촬영할 수 있습니다. (투표참관인은 사고 발생 시에만 촬영 가능)',
+    q: '다음 중 투표참관인이 될 수 없는 사람을 모두 고르시오.',
+    options: ['통·리·반의 장', '읍·면·동 주민자치위원회 위원', '현직 공무원', '퇴직 공무원'],
+    answer: [0, 1, 2],
+    multi: true,
+    explanation: '통·리·반장, 주민자치위원회 위원, 현직 공무원 등 입후보 제한직에 있는 자는 참관인이 될 수 없습니다. 퇴직 공무원은 참관인이 될 수 있습니다.',
   },
   {
     q: '투표참관인 수당을 받으려면 최소 몇 시간 이상 출석해야 하는가?',
     options: ['3시간', '4시간', '6시간', '8시간'],
-    answer: 2,
+    answer: [2],
     explanation: '투표참관인은 6시간 이상 출석해야 수당(10만원)을 받을 수 있습니다.',
   },
   {
-    q: '다음 중 투표참관인이 될 수 없는 사람은?',
-    options: ['대학생', '자영업자', '후보자의 배우자', '퇴직 공무원'],
-    answer: 2,
-    explanation: '후보자 본인과 후보자의 배우자는 투표참관인이 될 수 없습니다.',
+    q: '투표 개시 전 투표참관인이 가장 먼저 확인해야 할 것은?',
+    options: ['자신의 좌석 위치', '투표용지에 인쇄된 후보 이름', '투표함이 비어 있는지와 봉인 상태', '선거인 명부의 이름 순서'],
+    answer: [2],
+    explanation: '투표 시작 전 참관인은 투표함이 비어 있는지 직접 확인하고 봉인을 함께 점검합니다. 부정 투입을 막기 위한 가장 중요한 절차이고, 참관인이 없으면 이 검증 자체가 성립하지 않습니다.',
   },
   {
     q: '투표관리관이 유권자의 신분을 확인하지 않고 투표용지를 교부하는 것을 목격했다. 어떻게 해야 하는가?',
     options: ['모른 척 한다', '직접 유권자에게 신분증을 요구한다', '투표관리관에게 시정을 요구한다', '경찰에 신고한다'],
-    answer: 2,
+    answer: [2],
     explanation: '참관인은 법 위반 사실을 발견하면 시정을 요구할 수 있으며, 투표관리관은 정당한 요구를 시정해야 할 의무가 있습니다.',
   },
   {
-    q: '투표참관인과 개표참관인의 촬영 권한 차이는?',
-    options: ['둘 다 언제든 촬영 가능', '둘 다 촬영 불가', '투표참관인은 사고 시에만, 개표참관인은 언제든 가능', '투표참관인만 촬영 가능'],
-    answer: 2,
-    explanation: '투표소와 개표소의 촬영 규정이 다릅니다. 현장에서 가장 헷갈리기 쉬운 부분이니 꼭 기억하세요!',
+    q: '지방선거 당일 받는 비례대표 정당투표 용지의 특징은?',
+    options: ['후보자 이름이 적혀 있다', '정당 이름과 기호만 적혀 있다 (사람 이름 없음)', '지역구와 한 장에 같이 표시한다', '색깔이 따로 없다'],
+    answer: [1],
+    explanation: '비례 투표용지에는 정당명만 나오므로 정의당 칸에 기표하시면 됩니다. 지방선거 당일 받는 용지가 7~8장이라 헷갈리기 쉬우니, 비례용지가 나오면 꼭 정의당을 찾아주세요.',
   },
   {
-    q: '개표참관인은 개표 내용을 몇 미터 이내에서 참관할 수 있는가?',
-    options: ['3m~5m', '2m~3m', '1m~2m', '제한 없음'],
-    answer: 2,
-    explanation: '선관위는 개표참관인이 개표 내용을 식별할 수 있도록 1m 이상 2m 이내의 참관인석을 마련해야 합니다.',
+    q: '이번에 정의당 후보가 나온 지역을 모두 골라주세요.',
+    options: ['경상남도 비례', '진주시 지역구 (천전·가호·성북)', '거제시 비례', '창원시 비례'],
+    answer: [0, 1, 3],
+    multi: true,
+    explanation: '정의당은 경상남도 광역의회 비례, 창원시 기초의회 비례 두 곳에 비례 후보를 냈고, 진주시 라선거구(천전·가호·성북)에는 김용국 지역구 후보가 출마했습니다. 거제시에는 후보를 내지 않았습니다.',
   },
   {
-    q: '다음 중 투표참관인이 될 수 없는 사람을 모두 고르시오.',
-    options: ['통·리·반의 장', '읍·면·동 주민자치위원회 위원', '현직 공무원', 'A, B, C 모두'],
-    answer: 3,
-    explanation: '통·리·반장, 주민자치위원회 위원, 공무원 등 입후보 제한직에 있는 자는 모두 참관인이 될 수 없습니다.',
-  },
-  {
-    q: '옆자리 참관인이 투표하러 온 유권자에게 말을 걸며 대화를 시도하고 있다. 어떻게 대응해야 하는가?',
-    options: ['같이 대화에 참여한다', '무시한다', '투표관리관에게 알려 시정을 요구한다', '직접 제지한다'],
-    answer: 2,
-    explanation: '참관인이 유권자에게 말을 거는 것은 선거에 영향을 미치는 행위에 해당할 수 있습니다. 직접 제지하기보다 투표관리관에게 알려 시정을 요구하는 것이 올바른 대응입니다.',
-  },
-  {
-    q: '개표참관인은 개표상황을 정당·후보자에게 통보할 수 있는가?',
-    options: ['가능하다', '불가능하다'],
-    answer: 0,
-    explanation: '개표참관인은 선관위가 지정한 장소에 통신설비를 설치하고, 개표상황을 후보자 또는 정당에 통보할 수 있습니다. 이것이 참관인을 보내는 핵심적인 이유 중 하나입니다.',
+    q: '창원에 사는 경남도민이 정의당에 투표할 수 있는 곳은?',
+    options: ['경상남도의원 비례대표 선거', '김해시의원 지역구 선거', '진주시의원 지역구 선거', '창원시의원 비례대표 선거'],
+    answer: [0, 3],
+    multi: true,
+    explanation: '경상남도의회 비례는 경남 어디에 사셔도 투표 가능하고, 창원시의회 비례는 창원 거주자가 투표할 수 있습니다. 김해·진주 지역구 선거는 해당 지역 거주자만 참여하므로 창원 거주자는 투표할 수 없습니다. 창원에 사신다면 도의회 비례 + 시의회 비례 두 곳에서 정의당을 선택해 주세요.',
   },
 ];
+
+function isAnswerCorrect(quiz: Quiz, selected: number[]): boolean {
+  if (selected.length !== quiz.answer.length) return false;
+  const sel = [...selected].sort((a, b) => a - b);
+  const ans = [...quiz.answer].sort((a, b) => a - b);
+  return sel.every((v, i) => v === ans[i]);
+}
 
 const STEP_TITLES = [
   '정의당에 투표할 수 있는 곳',
@@ -389,16 +389,27 @@ function ChecklistItems() {
 // === 퀴즈 스텝 (7단계) ===
 
 function QuizStep({ onPass }: { onPass: () => void }) {
-  const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [answers, setAnswers] = useState<Record<number, number[]>>({});
   const [showResults, setShowResults] = useState(false);
 
   const handleSelect = (qIdx: number, optIdx: number) => {
     if (showResults) return;
-    setAnswers(prev => ({ ...prev, [qIdx]: optIdx }));
+    const quiz = quizzes[qIdx];
+    setAnswers(prev => {
+      const current = prev[qIdx] || [];
+      if (quiz.multi) {
+        const next = current.includes(optIdx)
+          ? current.filter(i => i !== optIdx)
+          : [...current, optIdx];
+        return { ...prev, [qIdx]: next };
+      }
+      return { ...prev, [qIdx]: [optIdx] };
+    });
   };
 
-  const score = quizzes.filter((q, i) => answers[i] === q.answer).length;
-  const allAnswered = Object.keys(answers).length === quizzes.length;
+  const score = quizzes.filter((q, i) => isAnswerCorrect(q, answers[i] || [])).length;
+  const answeredCount = quizzes.filter((_, i) => (answers[i] || []).length > 0).length;
+  const allAnswered = answeredCount === quizzes.length;
   const perfect = showResults && score === quizzes.length;
 
   useEffect(() => {
@@ -409,18 +420,27 @@ function QuizStep({ onPass }: { onPass: () => void }) {
     <>
       <div className="space-y-6">
         {quizzes.map((quiz, qIdx) => {
-          const selected = answers[qIdx];
-          const isCorrect = selected === quiz.answer;
+          const selected = answers[qIdx] || [];
+          const isCorrect = isAnswerCorrect(quiz, selected);
           return (
             <div key={qIdx} className="bg-white border rounded-xl p-4">
-              <p className="font-medium text-gray-900 mb-3">Q{qIdx + 1}. {quiz.q}</p>
+              <div className="flex items-start gap-2 mb-3">
+                <p className="font-medium text-gray-900 flex-1">Q{qIdx + 1}. {quiz.q}</p>
+                {quiz.multi && (
+                  <span className="shrink-0 text-xs font-medium text-yellow-700 bg-yellow-100 border border-yellow-300 rounded-full px-2 py-0.5">
+                    복수 선택
+                  </span>
+                )}
+              </div>
               <div className="space-y-2">
                 {quiz.options.map((opt, optIdx) => {
+                  const isOptionSelected = selected.includes(optIdx);
+                  const isOptionCorrect = quiz.answer.includes(optIdx);
                   let style = 'border-gray-200 bg-white';
                   if (showResults) {
-                    if (optIdx === quiz.answer) style = 'border-green-400 bg-green-50';
-                    else if (selected === optIdx && !isCorrect) style = 'border-red-300 bg-red-50';
-                  } else if (selected === optIdx) {
+                    if (isOptionCorrect) style = 'border-green-400 bg-green-50';
+                    else if (isOptionSelected) style = 'border-red-300 bg-red-50';
+                  } else if (isOptionSelected) {
                     style = 'border-yellow-400 bg-yellow-50';
                   }
                   return (
@@ -450,7 +470,7 @@ function QuizStep({ onPass }: { onPass: () => void }) {
           disabled={!allAnswered}
           className="w-full mt-6 py-3 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          {allAnswered ? '결과 확인하기' : `${Object.keys(answers).length}/${quizzes.length}문제 답변 완료`}
+          {allAnswered ? '결과 확인하기' : `${answeredCount}/${quizzes.length}문제 답변 완료`}
         </button>
       ) : perfect ? (
         <div className="mt-6 text-center">
