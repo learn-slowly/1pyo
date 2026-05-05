@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { getConfig } from "@/lib/sheets";
 
@@ -8,7 +9,15 @@ export default async function Home() {
     <main className="min-h-screen flex flex-col items-center justify-center px-4">
       <div className="max-w-md w-full text-center space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">2026한표</h1>
+          <Image
+            src="/top_logo_main1.png"
+            alt="정의당"
+            width={174}
+            height={65}
+            className="mx-auto mb-4"
+            priority
+          />
+          <h1 className="text-2xl font-bold text-gray-900">2026 지방선거 참관인 모집</h1>
           <p className="text-gray-500 mt-2">한 표의 정의를 지키는, 정의당의 한 표 지킴이</p>
         </div>
 
