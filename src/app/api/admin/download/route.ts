@@ -27,9 +27,9 @@ async function getSheetsClient() {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
-    const filterType = searchParams.get('type') || '';
-    const filterSigungu = searchParams.get('sigungu') || '';
-    const filterStatus = searchParams.get('status') || '';
+    const filterTypes = (searchParams.get('type') || '').split(',').map(s => s.trim()).filter(Boolean);
+    const filterSigungus = (searchParams.get('sigungu') || '').split(',').map(s => s.trim()).filter(Boolean);
+    const filterStatuses = (searchParams.get('status') || '').split(',').map(s => s.trim()).filter(Boolean);
     const filterAddress = (searchParams.get('address') || '').trim();
     const filterRecruiters = (searchParams.get('recruiter') || '').split(',').map(s => s.trim()).filter(Boolean);
     const filterMemo = (searchParams.get('memo') || '').trim();
@@ -37,8 +37,8 @@ export async function GET(request: NextRequest) {
     const sheets = await getSheetsClient();
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID!;
 
-    const sheetsToQuery = filterType
-      ? SHEETS.filter(s => s.typeKey === filterType)
+    const sheetsToQuery = filterTypes.length > 0
+      ? SHEETS.filter(s => filterTypes.includes(s.typeKey))
       : SHEETS;
 
     const responses = await Promise.all(
@@ -67,8 +67,8 @@ export async function GET(request: NextRequest) {
         const recruiter = row[22] || '';
         const memo = row[23] || '';
 
-        if (filterSigungu && sigungu !== filterSigungu) continue;
-        if (filterStatus && status !== filterStatus) continue;
+        if (filterSigungus.length > 0 && !filterSigungus.includes(sigungu)) continue;
+        if (filterStatuses.length > 0 && !filterStatuses.includes(status)) continue;
         if (filterRecruiters.length > 0 && !filterRecruiters.includes(recruiter)) continue;
         if (filterAddress) {
           const combined = `${address} ${addressDetail}`.toLowerCase();
@@ -129,13 +129,15 @@ export async function GET(request: NextRequest) {
     const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
 
     const datePart = new Date().toISOString().slice(0, 10);
+    const typeMap: Record<string, string> = { polling: '본투표', early: '사전투표', counting: '개표' };
+    const statusMap: Record<string, string> = { confirmed: '확정', applied: '신청완료', lottery: '추첨대기' };
     const nameParts = [
-      filterType ? { polling: '본투표', early: '사전투표', counting: '개표' }[filterType] : '',
-      filterSigungu,
+      filterTypes.map(t => typeMap[t] || t).join('+'),
+      filterSigungus.join('+'),
       filterRecruiters.join('+'),
       filterAddress,
       filterMemo,
-      filterStatus ? { confirmed: '확정', applied: '신청완료', lottery: '추첨대기' }[filterStatus] : '',
+      filterStatuses.map(s => statusMap[s] || s).join('+'),
     ].filter(Boolean).join('_');
     const filename = encodeURIComponent(`신청자인적사항_${nameParts ? nameParts + '_' : ''}${datePart}.xlsx`);
 

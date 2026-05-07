@@ -55,37 +55,106 @@ const TYPE_LABELS: Record<string, string> = {
   counting: '개표',
 };
 
+interface CheckboxDropdownProps {
+  label: string;
+  options: { value: string; label: string }[];
+  selected: string[];
+  onChange: (values: string[]) => void;
+}
+
+function CheckboxDropdown({ label, options, selected, onChange }: CheckboxDropdownProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const toggle = (value: string) => {
+    onChange(selected.includes(value) ? selected.filter(v => v !== value) : [...selected, value]);
+  };
+
+  const active = selected.length > 0;
+  const displayLabel = active
+    ? options.filter(o => selected.includes(o.value)).map(o => o.label).join(', ')
+    : label;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={`px-3 py-2 border rounded-lg text-sm bg-white flex items-center gap-1.5 hover:bg-gray-50 max-w-[180px] ${active ? 'border-yellow-400 text-yellow-800 font-medium' : 'text-gray-700'}`}
+      >
+        <span className="truncate">{displayLabel}</span>
+        <span className="text-gray-400 shrink-0">{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div className="absolute z-10 mt-1 bg-white border rounded-lg shadow-lg min-w-[140px] py-1">
+          {options.map(opt => (
+            <label key={opt.value} className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selected.includes(opt.value)}
+                onChange={() => toggle(opt.value)}
+                className="accent-yellow-400"
+              />
+              <span className="text-sm text-gray-700">{opt.label}</span>
+            </label>
+          ))}
+          {active && (
+            <button
+              type="button"
+              onClick={() => onChange([])}
+              className="w-full text-left px-3 py-1.5 text-xs text-gray-400 hover:text-gray-600 border-t mt-1"
+            >
+              선택 해제
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [sigunguList, setSigunguList] = useState<string[]>([]);
   const [recruiterList, setRecruiterList] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterType, setFilterType] = useState('');
-  const [filterSigungu, setFilterSigungu] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+
+  const [filterTypes, setFilterTypes] = useState<string[]>([]);
+  const [filterSigungus, setFilterSigungus] = useState<string[]>([]);
+  const [filterStatuses, setFilterStatuses] = useState<string[]>([]);
   const [filterRecruiters, setFilterRecruiters] = useState<string[]>([]);
-  const [recruiterDropdownOpen, setRecruiterDropdownOpen] = useState(false);
-  const recruiterDropdownRef = useRef<HTMLDivElement>(null);
   const [filterAddress, setFilterAddress] = useState('');
   const [filterAddressInput, setFilterAddressInput] = useState('');
   const [filterMemo, setFilterMemo] = useState('');
   const [filterMemoInput, setFilterMemoInput] = useState('');
+
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const buildParams = useCallback(() => {
     const params = new URLSearchParams();
-    if (filterType) params.set('type', filterType);
-    if (filterSigungu) params.set('sigungu', filterSigungu);
-    if (filterStatus) params.set('status', filterStatus);
+    if (filterTypes.length > 0) params.set('type', filterTypes.join(','));
+    if (filterSigungus.length > 0) params.set('sigungu', filterSigungus.join(','));
+    if (filterStatuses.length > 0) params.set('status', filterStatuses.join(','));
     if (filterRecruiters.length > 0) params.set('recruiter', filterRecruiters.join(','));
     if (filterAddress) params.set('address', filterAddress);
     if (filterMemo) params.set('memo', filterMemo);
+    return params;
+  }, [filterTypes, filterSigungus, filterStatuses, filterRecruiters, filterAddress, filterMemo]);
 
+  const fetchData = useCallback(async () => {
+    setLoading(true);
     try {
-      const res = await fetch(`/api/admin/applicants?${params}`);
+      const res = await fetch(`/api/admin/applicants?${buildParams()}`);
       const data = await res.json();
       if (data.success) {
         setApplicants(data.applicants);
@@ -95,38 +164,15 @@ export default function DashboardPage() {
       }
     } catch { /* ignore */ }
     finally { setLoading(false); }
-  }, [filterType, filterSigungu, filterStatus, filterRecruiters, filterAddress, filterMemo]);
+  }, [buildParams]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (recruiterDropdownRef.current && !recruiterDropdownRef.current.contains(e.target as Node)) {
-        setRecruiterDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  const toggleRecruiter = (name: string) => {
-    setFilterRecruiters(prev =>
-      prev.includes(name) ? prev.filter(r => r !== name) : [...prev, name]
-    );
-  };
 
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      const params = new URLSearchParams();
-      if (filterType) params.set('type', filterType);
-      if (filterSigungu) params.set('sigungu', filterSigungu);
-      if (filterStatus) params.set('status', filterStatus);
-      if (filterRecruiters.length > 0) params.set('recruiter', filterRecruiters.join(','));
-      if (filterAddress) params.set('address', filterAddress);
-      if (filterMemo) params.set('memo', filterMemo);
-      const res = await fetch(`/api/admin/download?${params}`);
-      if (!res.ok) throw new Error('다운로드 실패');
+      const res = await fetch(`/api/admin/download?${buildParams()}`);
+      if (!res.ok) throw new Error();
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -192,6 +238,17 @@ export default function DashboardPage() {
     finally { setActionLoading(null); }
   };
 
+  const typeOptions = [
+    { value: 'polling', label: '본투표' },
+    { value: 'early', label: '사전투표' },
+    { value: 'counting', label: '개표' },
+  ];
+  const statusOptions = [
+    { value: 'applied', label: '신청완료' },
+    { value: 'confirmed', label: '확정' },
+    { value: 'lottery', label: '추첨대기' },
+  ];
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-4">
@@ -226,65 +283,30 @@ export default function DashboardPage() {
 
       {/* 필터 */}
       <div className="flex flex-wrap gap-2 mb-4">
-        <select value={filterType} onChange={(e) => setFilterType(e.target.value)}
-          className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-700">
-          <option value="">전체 유형</option>
-          <option value="polling">본투표</option>
-          <option value="early">사전투표</option>
-          <option value="counting">개표</option>
-        </select>
-        <select value={filterSigungu} onChange={(e) => setFilterSigungu(e.target.value)}
-          className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-700">
-          <option value="">전체 지역</option>
-          {sigunguList.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-700">
-          <option value="">전체 상태</option>
-          <option value="applied">신청완료</option>
-          <option value="confirmed">확정</option>
-          <option value="lottery">추첨대기</option>
-        </select>
-        <div className="relative" ref={recruiterDropdownRef}>
-          <button
-            type="button"
-            onClick={() => setRecruiterDropdownOpen(o => !o)}
-            className={`px-3 py-2 border rounded-lg text-sm bg-white text-gray-700 hover:bg-gray-50 flex items-center gap-1.5 ${filterRecruiters.length > 0 ? 'border-yellow-400 text-yellow-800' : ''}`}
-          >
-            {filterRecruiters.length > 0 ? `모집책 ${filterRecruiters.length}명` : '전체 모집책'}
-            <span className="text-gray-400">{recruiterDropdownOpen ? '▲' : '▼'}</span>
-          </button>
-          {recruiterDropdownOpen && (
-            <div className="absolute z-10 mt-1 bg-white border rounded-lg shadow-lg min-w-[140px] py-1">
-              {recruiterList.length === 0 ? (
-                <p className="px-3 py-2 text-xs text-gray-400">모집책 없음</p>
-              ) : (
-                <>
-                  {recruiterList.map(r => (
-                    <label key={r} className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={filterRecruiters.includes(r)}
-                        onChange={() => toggleRecruiter(r)}
-                        className="accent-yellow-400"
-                      />
-                      <span className="text-sm text-gray-700">{r}</span>
-                    </label>
-                  ))}
-                  {filterRecruiters.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setFilterRecruiters([])}
-                      className="w-full text-left px-3 py-1.5 text-xs text-gray-400 hover:text-gray-600 border-t mt-1"
-                    >
-                      선택 해제
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </div>
+        <CheckboxDropdown
+          label="전체 유형"
+          options={typeOptions}
+          selected={filterTypes}
+          onChange={setFilterTypes}
+        />
+        <CheckboxDropdown
+          label="전체 지역"
+          options={sigunguList.map(s => ({ value: s, label: s }))}
+          selected={filterSigungus}
+          onChange={setFilterSigungus}
+        />
+        <CheckboxDropdown
+          label="전체 상태"
+          options={statusOptions}
+          selected={filterStatuses}
+          onChange={setFilterStatuses}
+        />
+        <CheckboxDropdown
+          label="전체 모집책"
+          options={recruiterList.map(r => ({ value: r, label: r }))}
+          selected={filterRecruiters}
+          onChange={setFilterRecruiters}
+        />
         <form
           onSubmit={(e) => { e.preventDefault(); setFilterAddress(filterAddressInput); }}
           className="flex gap-1"

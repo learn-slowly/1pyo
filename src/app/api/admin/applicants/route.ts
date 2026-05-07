@@ -28,15 +28,15 @@ export async function GET(request: NextRequest) {
     const sheets = await getSheetsClient();
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID!;
     const { searchParams } = request.nextUrl;
-    const filterType = searchParams.get('type');
-    const filterSigungu = searchParams.get('sigungu');
-    const filterStatus = searchParams.get('status');
+    const filterTypes = (searchParams.get('type') || '').split(',').map(s => s.trim()).filter(Boolean);
+    const filterSigungus = (searchParams.get('sigungu') || '').split(',').map(s => s.trim()).filter(Boolean);
+    const filterStatuses = (searchParams.get('status') || '').split(',').map(s => s.trim()).filter(Boolean);
     const filterAddress = searchParams.get('address')?.trim() || '';
     const filterRecruiters = (searchParams.get('recruiter') || '').split(',').map(s => s.trim()).filter(Boolean);
     const filterMemo = searchParams.get('memo')?.trim() || '';
 
-    const sheetsToQuery = filterType
-      ? SHEETS.filter(s => s.typeKey === filterType)
+    const sheetsToQuery = filterTypes.length > 0
+      ? SHEETS.filter(s => filterTypes.includes(s.typeKey))
       : SHEETS;
 
     const responses = await Promise.all(
@@ -75,8 +75,8 @@ export async function GET(request: NextRequest) {
           stats.total++;
           stats.byStatus[status || 'applied'] = (stats.byStatus[status || 'applied'] || 0) + 1;
 
-          if (filterSigungu && sigungu !== filterSigungu) continue;
-          if (filterStatus && status !== filterStatus) continue;
+          if (filterSigungus.length > 0 && !filterSigungus.includes(sigungu)) continue;
+          if (filterStatuses.length > 0 && !filterStatuses.includes(status || 'applied')) continue;
           if (filterRecruiters.length > 0 && !filterRecruiters.includes(recruiter)) continue;
 
           const zipCode = row[9] || '';
