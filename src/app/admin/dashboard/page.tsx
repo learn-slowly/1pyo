@@ -138,6 +138,7 @@ export default function DashboardPage() {
   const [filterMemoInput, setFilterMemoInput] = useState('');
 
   const [excludeSelfMember, setExcludeSelfMember] = useState(false);
+  const [citizenOnly, setCitizenOnly] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
 
@@ -150,8 +151,9 @@ export default function DashboardPage() {
     if (filterAddress) params.set('address', filterAddress);
     if (filterMemo) params.set('memo', filterMemo);
     if (excludeSelfMember) params.set('excludeSelfMember', '1');
+    if (citizenOnly) params.set('citizenOnly', '1');
     return params;
-  }, [filterTypes, filterSigungus, filterStatuses, filterRecruiters, filterAddress, filterMemo, excludeSelfMember]);
+  }, [filterTypes, filterSigungus, filterStatuses, filterRecruiters, filterAddress, filterMemo, excludeSelfMember, citizenOnly]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -352,6 +354,13 @@ export default function DashboardPage() {
           className={`px-3 py-2 border rounded-lg text-sm font-medium transition-colors ${excludeSelfMember ? 'bg-red-50 border-red-300 text-red-700' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
         >
           당원 본인 제외{excludeSelfMember ? ' ✓' : ''}
+        </button>
+        <button
+          type="button"
+          onClick={() => setCitizenOnly(v => !v)}
+          className={`px-3 py-2 border rounded-lg text-sm font-medium transition-colors ${citizenOnly ? 'bg-yellow-400 border-yellow-400 text-yellow-900' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+        >
+          일반 시민만{citizenOnly ? ' ✓' : ''}
         </button>
       </div>
 

@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
     const filterRecruiters = (searchParams.get('recruiter') || '').split(',').map(s => s.trim()).filter(Boolean);
     const filterMemo = (searchParams.get('memo') || '').trim();
     const excludeSelfMember = searchParams.get('excludeSelfMember') === '1';
+    const citizenOnly = searchParams.get('citizenOnly') === '1';
 
     const sheets = await getSheetsClient();
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID!;
@@ -83,6 +84,12 @@ export async function GET(request: NextRequest) {
         if (excludeSelfMember) {
           const noteParts = (row[14] || '').split(',').map((s: string) => s.trim());
           if (noteParts.includes('당원')) continue;
+        }
+        if (citizenOnly) {
+          if (recruiter !== '') continue;
+          const noteParts = (row[14] || '').split(',').map((s: string) => s.trim());
+          if (noteParts.includes('당원')) continue;
+          if (noteParts.some((p: string) => p.startsWith('당원지인'))) continue;
         }
 
         const phone = [row[6], row[7], row[8]].filter(Boolean).join('-');
