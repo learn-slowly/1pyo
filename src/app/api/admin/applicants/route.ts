@@ -77,7 +77,11 @@ export async function GET(request: NextRequest) {
 
           if (filterSigungus.length > 0 && !filterSigungus.includes(sigungu)) continue;
           if (filterStatuses.length > 0 && !filterStatuses.includes(status || 'applied')) continue;
-          if (filterRecruiters.length > 0 && !filterRecruiters.includes(recruiter)) continue;
+          if (filterRecruiters.length > 0) {
+            const matchNone = filterRecruiters.includes('__none__') && recruiter === '';
+            const matchName = filterRecruiters.filter(r => r !== '__none__').includes(recruiter);
+            if (!matchNone && !matchName) continue;
+          }
 
           const zipCode = row[9] || '';
           const address = row[10] || '';

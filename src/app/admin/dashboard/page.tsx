@@ -303,7 +303,10 @@ export default function DashboardPage() {
         />
         <CheckboxDropdown
           label="전체 모집책"
-          options={recruiterList.map(r => ({ value: r, label: r }))}
+          options={[
+            { value: '__none__', label: '(없음)' },
+            ...recruiterList.map(r => ({ value: r, label: r })),
+          ]}
           selected={filterRecruiters}
           onChange={setFilterRecruiters}
         />
