@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const filterStatuses = (searchParams.get('status') || '').split(',').map(s => s.trim()).filter(Boolean);
     const filterAddress = (searchParams.get('address') || '').trim();
     const filterRecruiters = (searchParams.get('recruiter') || '').split(',').map(s => s.trim()).filter(Boolean);
-    const filterMemo = (searchParams.get('memo') || '').trim();
+    const filterMemo = searchParams.get('memoFilter') || '';
     const excludeSelfMember = searchParams.get('excludeSelfMember') === '1';
     const citizenOnly = searchParams.get('citizenOnly') === '1';
 
@@ -80,7 +80,8 @@ export async function GET(request: NextRequest) {
           const combined = `${address} ${addressDetail}`.toLowerCase();
           if (!combined.includes(filterAddress.toLowerCase())) continue;
         }
-        if (filterMemo && !memo.toLowerCase().includes(filterMemo.toLowerCase())) continue;
+        if (filterMemo === 'has' && !memo) continue;
+        if (filterMemo === 'none' && memo) continue;
         if (excludeSelfMember) {
           const noteParts = (row[14] || '').split(',').map((s: string) => s.trim());
           if (noteParts.includes('당원')) continue;

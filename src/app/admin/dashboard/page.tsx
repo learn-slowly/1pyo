@@ -135,7 +135,6 @@ export default function DashboardPage() {
   const [filterAddress, setFilterAddress] = useState('');
   const [filterAddressInput, setFilterAddressInput] = useState('');
   const [filterMemo, setFilterMemo] = useState('');
-  const [filterMemoInput, setFilterMemoInput] = useState('');
 
   const [excludeSelfMember, setExcludeSelfMember] = useState(false);
   const [citizenOnly, setCitizenOnly] = useState(false);
@@ -149,7 +148,7 @@ export default function DashboardPage() {
     if (filterStatuses.length > 0) params.set('status', filterStatuses.join(','));
     if (filterRecruiters.length > 0) params.set('recruiter', filterRecruiters.join(','));
     if (filterAddress) params.set('address', filterAddress);
-    if (filterMemo) params.set('memo', filterMemo);
+    if (filterMemo) params.set('memoFilter', filterMemo);
     if (excludeSelfMember) params.set('excludeSelfMember', '1');
     if (citizenOnly) params.set('citizenOnly', '1');
     return params;
@@ -331,23 +330,15 @@ export default function DashboardPage() {
               className="px-2 py-2 text-sm text-gray-400 hover:text-gray-600">✕</button>
           )}
         </form>
-        <form
-          onSubmit={(e) => { e.preventDefault(); setFilterMemo(filterMemoInput); }}
-          className="flex gap-1"
-        >
-          <input
-            type="text"
-            value={filterMemoInput}
-            onChange={(e) => setFilterMemoInput(e.target.value)}
-            placeholder="메모 검색..."
-            className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-700 w-36 focus:outline-none focus:border-yellow-400"
-          />
-          <button type="submit" className="px-2 py-2 border rounded-lg text-sm bg-white text-gray-700 hover:bg-gray-50">검색</button>
-          {filterMemo && (
-            <button type="button" onClick={() => { setFilterMemo(''); setFilterMemoInput(''); }}
-              className="px-2 py-2 text-sm text-gray-400 hover:text-gray-600">✕</button>
-          )}
-        </form>
+        <CheckboxDropdown
+          label="메모 전체"
+          options={[
+            { value: 'has', label: '메모 있음' },
+            { value: 'none', label: '메모 없음' },
+          ]}
+          selected={filterMemo ? [filterMemo] : []}
+          onChange={(vals) => setFilterMemo(vals[vals.length - 1] ?? '')}
+        />
         <button
           type="button"
           onClick={() => setExcludeSelfMember(v => !v)}
