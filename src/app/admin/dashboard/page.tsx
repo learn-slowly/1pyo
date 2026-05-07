@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface Applicant {
   rowIndex: number;
@@ -64,7 +64,9 @@ export default function DashboardPage() {
   const [filterType, setFilterType] = useState('');
   const [filterSigungu, setFilterSigungu] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [filterRecruiter, setFilterRecruiter] = useState('');
+  const [filterRecruiters, setFilterRecruiters] = useState<string[]>([]);
+  const [recruiterDropdownOpen, setRecruiterDropdownOpen] = useState(false);
+  const recruiterDropdownRef = useRef<HTMLDivElement>(null);
   const [filterAddress, setFilterAddress] = useState('');
   const [filterAddressInput, setFilterAddressInput] = useState('');
   const [filterMemo, setFilterMemo] = useState('');
@@ -78,7 +80,7 @@ export default function DashboardPage() {
     if (filterType) params.set('type', filterType);
     if (filterSigungu) params.set('sigungu', filterSigungu);
     if (filterStatus) params.set('status', filterStatus);
-    if (filterRecruiter) params.set('recruiter', filterRecruiter);
+    if (filterRecruiters.length > 0) params.set('recruiter', filterRecruiters.join(','));
     if (filterAddress) params.set('address', filterAddress);
     if (filterMemo) params.set('memo', filterMemo);
 
@@ -93,9 +95,25 @@ export default function DashboardPage() {
       }
     } catch { /* ignore */ }
     finally { setLoading(false); }
-  }, [filterType, filterSigungu, filterStatus, filterRecruiter, filterAddress, filterMemo]);
+  }, [filterType, filterSigungu, filterStatus, filterRecruiters, filterAddress, filterMemo]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (recruiterDropdownRef.current && !recruiterDropdownRef.current.contains(e.target as Node)) {
+        setRecruiterDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const toggleRecruiter = (name: string) => {
+    setFilterRecruiters(prev =>
+      prev.includes(name) ? prev.filter(r => r !== name) : [...prev, name]
+    );
+  };
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -104,7 +122,7 @@ export default function DashboardPage() {
       if (filterType) params.set('type', filterType);
       if (filterSigungu) params.set('sigungu', filterSigungu);
       if (filterStatus) params.set('status', filterStatus);
-      if (filterRecruiter) params.set('recruiter', filterRecruiter);
+      if (filterRecruiters.length > 0) params.set('recruiter', filterRecruiters.join(','));
       if (filterAddress) params.set('address', filterAddress);
       if (filterMemo) params.set('memo', filterMemo);
       const res = await fetch(`/api/admin/download?${params}`);
@@ -227,11 +245,46 @@ export default function DashboardPage() {
           <option value="confirmed">확정</option>
           <option value="lottery">추첨대기</option>
         </select>
-        <select value={filterRecruiter} onChange={(e) => setFilterRecruiter(e.target.value)}
-          className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-700">
-          <option value="">전체 모집책</option>
-          {recruiterList.map(r => <option key={r} value={r}>{r}</option>)}
-        </select>
+        <div className="relative" ref={recruiterDropdownRef}>
+          <button
+            type="button"
+            onClick={() => setRecruiterDropdownOpen(o => !o)}
+            className={`px-3 py-2 border rounded-lg text-sm bg-white text-gray-700 hover:bg-gray-50 flex items-center gap-1.5 ${filterRecruiters.length > 0 ? 'border-yellow-400 text-yellow-800' : ''}`}
+          >
+            {filterRecruiters.length > 0 ? `모집책 ${filterRecruiters.length}명` : '전체 모집책'}
+            <span className="text-gray-400">{recruiterDropdownOpen ? '▲' : '▼'}</span>
+          </button>
+          {recruiterDropdownOpen && (
+            <div className="absolute z-10 mt-1 bg-white border rounded-lg shadow-lg min-w-[140px] py-1">
+              {recruiterList.length === 0 ? (
+                <p className="px-3 py-2 text-xs text-gray-400">모집책 없음</p>
+              ) : (
+                <>
+                  {recruiterList.map(r => (
+                    <label key={r} className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={filterRecruiters.includes(r)}
+                        onChange={() => toggleRecruiter(r)}
+                        className="accent-yellow-400"
+                      />
+                      <span className="text-sm text-gray-700">{r}</span>
+                    </label>
+                  ))}
+                  {filterRecruiters.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setFilterRecruiters([])}
+                      className="w-full text-left px-3 py-1.5 text-xs text-gray-400 hover:text-gray-600 border-t mt-1"
+                    >
+                      선택 해제
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
         <form
           onSubmit={(e) => { e.preventDefault(); setFilterAddress(filterAddressInput); }}
           className="flex gap-1"

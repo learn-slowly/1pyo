@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const filterSigungu = searchParams.get('sigungu');
     const filterStatus = searchParams.get('status');
     const filterAddress = searchParams.get('address')?.trim() || '';
-    const filterRecruiter = searchParams.get('recruiter')?.trim() || '';
+    const filterRecruiters = (searchParams.get('recruiter') || '').split(',').map(s => s.trim()).filter(Boolean);
     const filterMemo = searchParams.get('memo')?.trim() || '';
 
     const sheetsToQuery = filterType
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
           if (filterSigungu && sigungu !== filterSigungu) continue;
           if (filterStatus && status !== filterStatus) continue;
-          if (filterRecruiter && recruiter !== filterRecruiter) continue;
+          if (filterRecruiters.length > 0 && !filterRecruiters.includes(recruiter)) continue;
 
           const zipCode = row[9] || '';
           const address = row[10] || '';

@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const filterSigungu = searchParams.get('sigungu') || '';
     const filterStatus = searchParams.get('status') || '';
     const filterAddress = (searchParams.get('address') || '').trim();
-    const filterRecruiter = (searchParams.get('recruiter') || '').trim();
+    const filterRecruiters = (searchParams.get('recruiter') || '').split(',').map(s => s.trim()).filter(Boolean);
     const filterMemo = (searchParams.get('memo') || '').trim();
 
     const sheets = await getSheetsClient();
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
 
         if (filterSigungu && sigungu !== filterSigungu) continue;
         if (filterStatus && status !== filterStatus) continue;
-        if (filterRecruiter && recruiter !== filterRecruiter) continue;
+        if (filterRecruiters.length > 0 && !filterRecruiters.includes(recruiter)) continue;
         if (filterAddress) {
           const combined = `${address} ${addressDetail}`.toLowerCase();
           if (!combined.includes(filterAddress.toLowerCase())) continue;
@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
     const nameParts = [
       filterType ? { polling: '본투표', early: '사전투표', counting: '개표' }[filterType] : '',
       filterSigungu,
-      filterRecruiter,
+      filterRecruiters.join('+'),
       filterAddress,
       filterMemo,
       filterStatus ? { confirmed: '확정', applied: '신청완료', lottery: '추첨대기' }[filterStatus] : '',
