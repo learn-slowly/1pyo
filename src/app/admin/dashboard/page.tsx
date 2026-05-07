@@ -137,6 +137,7 @@ export default function DashboardPage() {
   const [filterMemo, setFilterMemo] = useState('');
   const [filterMemoInput, setFilterMemoInput] = useState('');
 
+  const [excludeSelfMember, setExcludeSelfMember] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
 
@@ -148,8 +149,9 @@ export default function DashboardPage() {
     if (filterRecruiters.length > 0) params.set('recruiter', filterRecruiters.join(','));
     if (filterAddress) params.set('address', filterAddress);
     if (filterMemo) params.set('memo', filterMemo);
+    if (excludeSelfMember) params.set('excludeSelfMember', '1');
     return params;
-  }, [filterTypes, filterSigungus, filterStatuses, filterRecruiters, filterAddress, filterMemo]);
+  }, [filterTypes, filterSigungus, filterStatuses, filterRecruiters, filterAddress, filterMemo, excludeSelfMember]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -344,6 +346,13 @@ export default function DashboardPage() {
               className="px-2 py-2 text-sm text-gray-400 hover:text-gray-600">✕</button>
           )}
         </form>
+        <button
+          type="button"
+          onClick={() => setExcludeSelfMember(v => !v)}
+          className={`px-3 py-2 border rounded-lg text-sm font-medium transition-colors ${excludeSelfMember ? 'bg-red-50 border-red-300 text-red-700' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+        >
+          당원 본인 제외{excludeSelfMember ? ' ✓' : ''}
+        </button>
       </div>
 
       {/* 테이블 */}
