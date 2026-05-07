@@ -355,6 +355,13 @@ export default function DashboardPage() {
         </button>
       </div>
 
+      {/* 결과 인원 */}
+      {!loading && (
+        <p className="text-sm text-gray-500 mb-2">
+          <span className="font-bold text-gray-900">{applicants.length}명</span> 표시 중
+        </p>
+      )}
+
       {/* 테이블 */}
       {loading ? (
         <div className="text-center py-12 text-gray-400">불러오는 중...</div>
