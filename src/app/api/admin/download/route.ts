@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
     const filterSigungu = searchParams.get('sigungu') || '';
     const filterStatus = searchParams.get('status') || '';
     const filterAddress = (searchParams.get('address') || '').trim();
+    const filterRecruiter = (searchParams.get('recruiter') || '').trim();
+    const filterMemo = (searchParams.get('memo') || '').trim();
 
     const sheets = await getSheetsClient();
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID!;
@@ -62,13 +64,17 @@ export async function GET(request: NextRequest) {
         const status = row[21] || 'applied';
         const address = row[10] || '';
         const addressDetail = row[11] || '';
+        const recruiter = row[22] || '';
+        const memo = row[23] || '';
 
         if (filterSigungu && sigungu !== filterSigungu) continue;
         if (filterStatus && status !== filterStatus) continue;
+        if (filterRecruiter && recruiter !== filterRecruiter) continue;
         if (filterAddress) {
           const combined = `${address} ${addressDetail}`.toLowerCase();
           if (!combined.includes(filterAddress.toLowerCase())) continue;
         }
+        if (filterMemo && !memo.toLowerCase().includes(filterMemo.toLowerCase())) continue;
 
         const phone = [row[6], row[7], row[8]].filter(Boolean).join('-');
         const timeSlot = row[16] || '';
@@ -90,8 +96,8 @@ export async function GET(request: NextRequest) {
           TIME_SLOT_LABELS[timeSlot] || timeSlot,
           statusLabel,
           row[14] || '',
-          row[22] || '',
-          row[23] || '',
+          recruiter,
+          memo,
         ]);
       }
     }
@@ -126,7 +132,9 @@ export async function GET(request: NextRequest) {
     const nameParts = [
       filterType ? { polling: '본투표', early: '사전투표', counting: '개표' }[filterType] : '',
       filterSigungu,
+      filterRecruiter,
       filterAddress,
+      filterMemo,
       filterStatus ? { confirmed: '확정', applied: '신청완료', lottery: '추첨대기' }[filterStatus] : '',
     ].filter(Boolean).join('_');
     const filename = encodeURIComponent(`신청자인적사항_${nameParts ? nameParts + '_' : ''}${datePart}.xlsx`);

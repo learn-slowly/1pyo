@@ -32,6 +32,8 @@ export async function GET(request: NextRequest) {
     const filterSigungu = searchParams.get('sigungu');
     const filterStatus = searchParams.get('status');
     const filterAddress = searchParams.get('address')?.trim() || '';
+    const filterRecruiter = searchParams.get('recruiter')?.trim() || '';
+    const filterMemo = searchParams.get('memo')?.trim() || '';
 
     const sheetsToQuery = filterType
       ? SHEETS.filter(s => s.typeKey === filterType)
@@ -46,6 +48,7 @@ export async function GET(request: NextRequest) {
 
     const applicants: Record<string, unknown>[] = [];
     const allSigungu = new Set<string>();
+    const allRecruiters = new Set<string>();
     const stats = { total: 0, totalSlots: 0, byType: {} as Record<string, { filled: number; total: number }>, byStatus: {} as Record<string, number> };
 
     for (const { sheet, rows } of responses) {
@@ -64,6 +67,8 @@ export async function GET(request: NextRequest) {
         const status = row[21] || '';
 
         if (sigungu) allSigungu.add(sigungu);
+        const recruiter = row[22] || '';
+        if (recruiter) allRecruiters.add(recruiter);
 
         if (name) {
           typeFilled++;
@@ -72,16 +77,21 @@ export async function GET(request: NextRequest) {
 
           if (filterSigungu && sigungu !== filterSigungu) continue;
           if (filterStatus && status !== filterStatus) continue;
+          if (filterRecruiter && recruiter !== filterRecruiter) continue;
 
           const zipCode = row[9] || '';
           const address = row[10] || '';
           const addressDetail = row[11] || '';
           const occupation = row[12] || '';
           const account = row[13] || '';
+          const memo = row[23] || '';
 
           if (filterAddress) {
             const combined = `${address} ${addressDetail}`.toLowerCase();
             if (!combined.includes(filterAddress.toLowerCase())) continue;
+          }
+          if (filterMemo) {
+            if (!memo.toLowerCase().includes(filterMemo.toLowerCase())) continue;
           }
 
           const phone = [row[6], row[7], row[8]].filter(Boolean).join('-');
@@ -110,8 +120,8 @@ export async function GET(request: NextRequest) {
             timestamp,
             status: status || 'applied',
             notes: row[14] || '',
-            recruiter: row[22] || '',
-            memo: row[23] || '',
+            recruiter,
+            memo,
           });
         }
         stats.totalSlots++;
@@ -127,7 +137,13 @@ export async function GET(request: NextRequest) {
       return tb.localeCompare(ta);
     });
 
-    return NextResponse.json({ success: true, applicants, stats, sigunguList: [...allSigungu].sort() });
+    return NextResponse.json({
+      success: true,
+      applicants,
+      stats,
+      sigunguList: [...allSigungu].sort(),
+      recruiterList: [...allRecruiters].sort(),
+    });
   } catch (error) {
     console.error('admin applicants error:', error);
     return NextResponse.json({ success: false, message: '데이터 조회 중 오류가 발생했습니다.' }, { status: 500 });

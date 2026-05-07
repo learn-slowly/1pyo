@@ -59,12 +59,16 @@ export default function DashboardPage() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [sigunguList, setSigunguList] = useState<string[]>([]);
+  const [recruiterList, setRecruiterList] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState('');
   const [filterSigungu, setFilterSigungu] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterRecruiter, setFilterRecruiter] = useState('');
   const [filterAddress, setFilterAddress] = useState('');
   const [filterAddressInput, setFilterAddressInput] = useState('');
+  const [filterMemo, setFilterMemo] = useState('');
+  const [filterMemoInput, setFilterMemoInput] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
 
@@ -74,7 +78,9 @@ export default function DashboardPage() {
     if (filterType) params.set('type', filterType);
     if (filterSigungu) params.set('sigungu', filterSigungu);
     if (filterStatus) params.set('status', filterStatus);
+    if (filterRecruiter) params.set('recruiter', filterRecruiter);
     if (filterAddress) params.set('address', filterAddress);
+    if (filterMemo) params.set('memo', filterMemo);
 
     try {
       const res = await fetch(`/api/admin/applicants?${params}`);
@@ -83,10 +89,11 @@ export default function DashboardPage() {
         setApplicants(data.applicants);
         setStats(data.stats);
         if (data.sigunguList) setSigunguList(data.sigunguList);
+        if (data.recruiterList) setRecruiterList(data.recruiterList);
       }
     } catch { /* ignore */ }
     finally { setLoading(false); }
-  }, [filterType, filterSigungu, filterStatus, filterAddress]);
+  }, [filterType, filterSigungu, filterStatus, filterRecruiter, filterAddress, filterMemo]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -97,7 +104,9 @@ export default function DashboardPage() {
       if (filterType) params.set('type', filterType);
       if (filterSigungu) params.set('sigungu', filterSigungu);
       if (filterStatus) params.set('status', filterStatus);
+      if (filterRecruiter) params.set('recruiter', filterRecruiter);
       if (filterAddress) params.set('address', filterAddress);
+      if (filterMemo) params.set('memo', filterMemo);
       const res = await fetch(`/api/admin/download?${params}`);
       if (!res.ok) throw new Error('다운로드 실패');
       const blob = await res.blob();
@@ -218,6 +227,11 @@ export default function DashboardPage() {
           <option value="confirmed">확정</option>
           <option value="lottery">추첨대기</option>
         </select>
+        <select value={filterRecruiter} onChange={(e) => setFilterRecruiter(e.target.value)}
+          className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-700">
+          <option value="">전체 모집책</option>
+          {recruiterList.map(r => <option key={r} value={r}>{r}</option>)}
+        </select>
         <form
           onSubmit={(e) => { e.preventDefault(); setFilterAddress(filterAddressInput); }}
           className="flex gap-1"
@@ -227,17 +241,29 @@ export default function DashboardPage() {
             value={filterAddressInput}
             onChange={(e) => setFilterAddressInput(e.target.value)}
             placeholder="주소 검색..."
-            className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-700 w-44 focus:outline-none focus:border-yellow-400"
+            className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-700 w-36 focus:outline-none focus:border-yellow-400"
           />
-          <button type="submit" className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-700 hover:bg-gray-50">
-            검색
-          </button>
+          <button type="submit" className="px-2 py-2 border rounded-lg text-sm bg-white text-gray-700 hover:bg-gray-50">검색</button>
           {filterAddress && (
-            <button
-              type="button"
-              onClick={() => { setFilterAddress(''); setFilterAddressInput(''); }}
-              className="px-2 py-2 text-sm text-gray-400 hover:text-gray-600"
-            >✕</button>
+            <button type="button" onClick={() => { setFilterAddress(''); setFilterAddressInput(''); }}
+              className="px-2 py-2 text-sm text-gray-400 hover:text-gray-600">✕</button>
+          )}
+        </form>
+        <form
+          onSubmit={(e) => { e.preventDefault(); setFilterMemo(filterMemoInput); }}
+          className="flex gap-1"
+        >
+          <input
+            type="text"
+            value={filterMemoInput}
+            onChange={(e) => setFilterMemoInput(e.target.value)}
+            placeholder="메모 검색..."
+            className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-700 w-36 focus:outline-none focus:border-yellow-400"
+          />
+          <button type="submit" className="px-2 py-2 border rounded-lg text-sm bg-white text-gray-700 hover:bg-gray-50">검색</button>
+          {filterMemo && (
+            <button type="button" onClick={() => { setFilterMemo(''); setFilterMemoInput(''); }}
+              className="px-2 py-2 text-sm text-gray-400 hover:text-gray-600">✕</button>
           )}
         </form>
       </div>
