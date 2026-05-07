@@ -12,6 +12,11 @@ interface Applicant {
   phone: string;
   birthDate: string;
   gender: string;
+  zipCode: string;
+  address: string;
+  addressDetail: string;
+  occupation: string;
+  account: string;
   stationId: string;
   timeSlot: string;
   timeSlotLabel: string;
@@ -58,7 +63,10 @@ export default function DashboardPage() {
   const [filterType, setFilterType] = useState('');
   const [filterSigungu, setFilterSigungu] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterAddress, setFilterAddress] = useState('');
+  const [filterAddressInput, setFilterAddressInput] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -66,6 +74,7 @@ export default function DashboardPage() {
     if (filterType) params.set('type', filterType);
     if (filterSigungu) params.set('sigungu', filterSigungu);
     if (filterStatus) params.set('status', filterStatus);
+    if (filterAddress) params.set('address', filterAddress);
 
     try {
       const res = await fetch(`/api/admin/applicants?${params}`);
@@ -77,9 +86,32 @@ export default function DashboardPage() {
       }
     } catch { /* ignore */ }
     finally { setLoading(false); }
-  }, [filterType, filterSigungu, filterStatus]);
+  }, [filterType, filterSigungu, filterStatus, filterAddress]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const params = new URLSearchParams();
+      if (filterType) params.set('type', filterType);
+      if (filterSigungu) params.set('sigungu', filterSigungu);
+      if (filterStatus) params.set('status', filterStatus);
+      if (filterAddress) params.set('address', filterAddress);
+      const res = await fetch(`/api/admin/download?${params}`);
+      if (!res.ok) throw new Error('다운로드 실패');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const disp = res.headers.get('Content-Disposition') || '';
+      const match = disp.match(/filename\*=UTF-8''(.+)/);
+      a.download = match ? decodeURIComponent(match[1]) : '신청자인적사항.xlsx';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { /* ignore */ }
+    finally { setDownloading(false); }
+  };
 
   const handleMemoSave = async (app: Applicant, newMemo: string) => {
     if (newMemo === (app.memo || '')) return;
@@ -137,7 +169,16 @@ export default function DashboardPage() {
     <div className="max-w-5xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-900">신청 현황</h1>
-        <a href="/admin/vacancies" className="text-sm text-yellow-600 font-medium hover:text-yellow-700">빈자리 현황 →</a>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="px-3 py-1.5 text-sm bg-yellow-400 text-yellow-900 font-medium rounded-lg hover:bg-yellow-500 disabled:opacity-50"
+          >
+            {downloading ? '처리 중...' : '인적사항 엑셀 다운로드'}
+          </button>
+          <a href="/admin/vacancies" className="text-sm text-yellow-600 font-medium hover:text-yellow-700">빈자리 현황 →</a>
+        </div>
       </div>
 
       {/* 통계 */}
@@ -177,6 +218,28 @@ export default function DashboardPage() {
           <option value="confirmed">확정</option>
           <option value="lottery">추첨대기</option>
         </select>
+        <form
+          onSubmit={(e) => { e.preventDefault(); setFilterAddress(filterAddressInput); }}
+          className="flex gap-1"
+        >
+          <input
+            type="text"
+            value={filterAddressInput}
+            onChange={(e) => setFilterAddressInput(e.target.value)}
+            placeholder="주소 검색..."
+            className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-700 w-44 focus:outline-none focus:border-yellow-400"
+          />
+          <button type="submit" className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-700 hover:bg-gray-50">
+            검색
+          </button>
+          {filterAddress && (
+            <button
+              type="button"
+              onClick={() => { setFilterAddress(''); setFilterAddressInput(''); }}
+              className="px-2 py-2 text-sm text-gray-400 hover:text-gray-600"
+            >✕</button>
+          )}
+        </form>
       </div>
 
       {/* 테이블 */}

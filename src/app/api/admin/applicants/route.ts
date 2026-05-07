@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
     const filterType = searchParams.get('type');
     const filterSigungu = searchParams.get('sigungu');
     const filterStatus = searchParams.get('status');
+    const filterAddress = searchParams.get('address')?.trim() || '';
 
     const sheetsToQuery = filterType
       ? SHEETS.filter(s => s.typeKey === filterType)
@@ -72,6 +73,17 @@ export async function GET(request: NextRequest) {
           if (filterSigungu && sigungu !== filterSigungu) continue;
           if (filterStatus && status !== filterStatus) continue;
 
+          const zipCode = row[9] || '';
+          const address = row[10] || '';
+          const addressDetail = row[11] || '';
+          const occupation = row[12] || '';
+          const account = row[13] || '';
+
+          if (filterAddress) {
+            const combined = `${address} ${addressDetail}`.toLowerCase();
+            if (!combined.includes(filterAddress.toLowerCase())) continue;
+          }
+
           const phone = [row[6], row[7], row[8]].filter(Boolean).join('-');
 
           applicants.push({
@@ -82,8 +94,13 @@ export async function GET(request: NextRequest) {
             serialNo: row[0] || '',
             name,
             phone,
-            birthDate: row[4] || '',
+            birthDate: (row[4] || '').replace(/'/g, ''),
             gender: row[5] === '1' ? '남' : row[5] === '2' ? '여' : '',
+            zipCode,
+            address,
+            addressDetail,
+            occupation,
+            account,
             stationId,
             timeSlot,
             timeSlotLabel: TIME_SLOT_LABELS[timeSlot] || timeSlot,
