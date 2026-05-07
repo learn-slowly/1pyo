@@ -24,21 +24,21 @@ export default async function Home() {
         <div className="space-y-3">
           <Link
             href="/guide"
-            className="block w-full py-5 bg-yellow-400 text-gray-900 font-bold text-xl rounded-xl hover:bg-yellow-500 transition-colors"
+            className="block w-full py-4 bg-yellow-400 text-gray-900 font-bold text-lg rounded-xl hover:bg-yellow-500 transition-colors"
           >
             참관인 신청하기
           </Link>
 
           <Link
             href="/check"
-            className="block w-full py-5 border-2 border-gray-200 text-gray-700 font-medium text-lg rounded-xl hover:bg-gray-50 transition-colors"
+            className="block w-full py-4 border-2 border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
           >
             내 신청 확인
           </Link>
 
           <Link
             href="/report"
-            className="block w-full py-5 border-2 border-gray-200 text-gray-700 font-medium text-lg rounded-xl hover:bg-gray-50 transition-colors"
+            className="block w-full py-4 border-2 border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
           >
             참관 보고
           </Link>
