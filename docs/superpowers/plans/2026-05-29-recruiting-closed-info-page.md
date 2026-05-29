@@ -27,6 +27,21 @@
 
 > 검증 보조: 로컬에서 mock이 활성화되려면 `GOOGLE_PRIVATE_KEY`가 비어 있어야 한다(`CLAUDE.md`). mock의 `recruiting_closed`를 `true`/`false`로 바꿔 양쪽 상태를 확인한다. 실제 시트 사용 시에는 `설정` 시트의 `recruiting_closed` 행을 `on`/빈값으로 토글한다.
 
+## 검증 기준 (중요)
+
+이 프로젝트는 테스트 러너가 없다. 게이트는 다음과 같다:
+
+- **`npx tsc --noEmit`** — 작업별 1차 게이트. **에러 0개여야 함** (현재 베이스라인 clean).
+- **`npm run build`** — 최종 게이트. **성공해야 함** (Next 16 빌드는 lint 에러로 실패하지 않음 — 확인됨).
+- **`npm run lint`** — **기존 베이스라인이 있다**: 에러 3 + 경고 6 (모두 이번 변경과 무관). 새 문제를 추가하지 않는 것만 확인한다. 기존 항목을 고치려 하지 말 것(범위 밖).
+
+**기존 lint 베이스라인 (건드리지 말 것):**
+- `src/app/guide/page.tsx` — set-state-in-effect 에러 1 (기존 `setQuizPassed` effect; 줄 번호는 편집 후 이동할 수 있음)
+- `src/components/apply/ApplyForm.tsx` — set-state-in-effect 에러 2
+- 경고 6 (unused-vars): `api/config`, `api/report`×2, `api/stations`, `api/upload`, `lib/sheets.ts(checkSlotFull)`
+
+> 주의: 새 `useEffect`에서 **동기적** `setState`를 effect 본문에 직접 두면 새 에러가 생긴다. `fetch().then(setX)`처럼 **비동기 콜백** 안의 setState는 규칙에 걸리지 않는다(가이드의 기존 `setConfig` 패턴과 동일). Task 6의 `setClosed`는 `.then()` 안이라 안전하다.
+
 ---
 
 ## Task 1: Config 토글 필드 추가
@@ -73,7 +88,7 @@
 
 - [ ] **Step 4: 타입체크 + 린트**
 
-Run: `npx tsc --noEmit && npm run lint`
+Run: `npx tsc --noEmit`
 Expected: 에러 없음 (Config 생성처 2곳 모두 새 필드를 채움)
 
 - [ ] **Step 5: Commit**
@@ -114,7 +129,7 @@ git commit -m "신청 마감 토글 recruiting_closed 설정 필드 추가"
 
 - [ ] **Step 2: 타입체크 + 린트**
 
-Run: `npx tsc --noEmit && npm run lint`
+Run: `npx tsc --noEmit`
 Expected: 에러 없음
 
 - [ ] **Step 3: Commit**
@@ -225,7 +240,7 @@ export default async function Home() {
 
 - [ ] **Step 2: 타입체크 + 린트**
 
-Run: `npx tsc --noEmit && npm run lint`
+Run: `npx tsc --noEmit`
 Expected: 에러 없음
 
 - [ ] **Step 3: Commit**
@@ -393,7 +408,7 @@ function Step2({ disqualifyConfirmed, onDisqualifyChange, infoMode = false }: { 
 
 - [ ] **Step 7: 타입체크 + 린트**
 
-Run: `npx tsc --noEmit && npm run lint`
+Run: `npx tsc --noEmit`
 Expected: 에러 없음. (`Link`는 이미 import됨 — 4번 줄)
 
 - [ ] **Step 8: Commit**
@@ -467,7 +482,7 @@ export default async function ApplyPage() {
 
 - [ ] **Step 2: 타입체크 + 린트**
 
-Run: `npx tsc --noEmit && npm run lint`
+Run: `npx tsc --noEmit`
 Expected: 에러 없음
 
 - [ ] **Step 3: Commit**
@@ -524,7 +539,7 @@ git commit -m "마감 시 신청 페이지에 마감 안내 표시"
 
 - [ ] **Step 3: 타입체크 + 린트**
 
-Run: `npx tsc --noEmit && npm run lint`
+Run: `npx tsc --noEmit`
 Expected: 에러 없음. (`useEffect`, `Link`는 이미 import됨)
 
 - [ ] **Step 4: Commit**
@@ -540,10 +555,13 @@ git commit -m "마감 시 신청 확인 페이지의 신청 링크 숨김"
 
 **Files:** 없음 (검증만)
 
-- [ ] **Step 1: 프로덕션 빌드**
+- [ ] **Step 1: 타입체크 + 프로덕션 빌드 + lint 베이스라인 확인**
 
-Run: `npm run build`
-Expected: 성공 (타입·린트 에러 없음)
+Run: `npx tsc --noEmit && npm run build`
+Expected: tsc 에러 0개, build 성공.
+
+Run: `npm run lint 2>&1 | tail -1`
+Expected: 정확히 `✖ 9 problems (3 errors, 6 warnings)` — 베이스라인과 동일(새 문제 없음). 숫자가 늘었다면 내가 추가한 것이므로 수정한다.
 
 - [ ] **Step 2: 마감 ON 상태 브라우저 확인**
 
