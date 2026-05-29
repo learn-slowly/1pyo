@@ -51,7 +51,7 @@ function Step1({ candidates, config }: { candidates: CandidateInfo[]; config: Co
   );
 }
 
-function Step2({ disqualifyConfirmed, onDisqualifyChange }: { disqualifyConfirmed: boolean; onDisqualifyChange: (v: boolean) => void }) {
+function Step2({ disqualifyConfirmed, onDisqualifyChange, infoMode = false }: { disqualifyConfirmed: boolean; onDisqualifyChange: (v: boolean) => void; infoMode?: boolean }) {
   return (
     <>
       <h3 className="text-sm font-bold text-gray-700 mb-2">참관인의 종류</h3>
@@ -87,15 +87,17 @@ function Step2({ disqualifyConfirmed, onDisqualifyChange }: { disqualifyConfirme
           <li className="flex gap-2 items-start"><span className="text-red-500 shrink-0">&#10007;</span>읍·면·동 주민자치위원회 위원, 통·리·반의 장</li>
           <li className="flex gap-2 items-start"><span className="text-red-500 shrink-0">&#10007;</span>후보자 본인 또는 후보자의 배우자</li>
         </ul>
-        <label className="flex items-start gap-3 mt-4 pt-3 border-t border-red-200 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={disqualifyConfirmed}
-            onChange={(e) => onDisqualifyChange(e.target.checked)}
-            className="mt-0.5 rounded border-red-300 text-red-500 focus:ring-red-400"
-          />
-          <span className="text-sm font-medium text-gray-900">위 결격사유에 해당하지 않음을 확인합니다.</span>
-        </label>
+        {!infoMode && (
+          <label className="flex items-start gap-3 mt-4 pt-3 border-t border-red-200 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={disqualifyConfirmed}
+              onChange={(e) => onDisqualifyChange(e.target.checked)}
+              className="mt-0.5 rounded border-red-300 text-red-500 focus:ring-red-400"
+            />
+            <span className="text-sm font-medium text-gray-900">위 결격사유에 해당하지 않음을 확인합니다.</span>
+          </label>
+        )}
       </div>
     </>
   );
@@ -343,7 +345,7 @@ export default function GuidePage() {
         setConfig(data.config);
         setCandidates(data.candidates);
         // members_only 모드면 인증 필요 여부 확인
-        if (data.config?.mode === 'members_only') {
+        if (data.config?.mode === 'members_only' && !data.config?.recruiting_closed) {
           const saved = loadMemberVerification();
           if (saved) {
             setMemberVerification(saved.verification);
@@ -366,8 +368,9 @@ export default function GuidePage() {
     }
   }, []);
 
-  // 당원/당원지인 인증 시 퀴즈 스킵
-  const skipQuiz = memberVerification !== null;
+  const closed = config?.recruiting_closed === true;
+  // 당원/당원지인 인증 시 또는 마감(정보 모드) 시 퀴즈 스킵
+  const skipQuiz = memberVerification !== null || closed;
   const effectiveTotalSteps = skipQuiz ? TOTAL_STEPS - 1 : TOTAL_STEPS;
   const effectiveStepTitles = skipQuiz ? STEP_TITLES.slice(0, -1) : STEP_TITLES;
   const isQuizStep = !skipQuiz && step === TOTAL_STEPS - 1;
@@ -454,7 +457,7 @@ export default function GuidePage() {
       </div>
 
       {/* 이미 이수한 경우 바로가기 */}
-      {quizPassed && !isQuizStep && (
+      {!closed && quizPassed && !isQuizStep && (
         <div className="mb-4 bg-green-50 border border-green-200 rounded-xl p-3 flex items-center justify-between">
           <p className="text-sm text-green-700">교육을 이수하셨습니다.</p>
           <button
@@ -473,7 +476,7 @@ export default function GuidePage() {
 
       {/* 콘텐츠 */}
       {step === 0 && <Step1 candidates={candidates} config={config} />}
-      {step === 1 && <Step2 disqualifyConfirmed={disqualifyConfirmed} onDisqualifyChange={setDisqualifyConfirmed} />}
+      {step === 1 && <Step2 disqualifyConfirmed={disqualifyConfirmed} onDisqualifyChange={setDisqualifyConfirmed} infoMode={closed} />}
       {step === 2 && <Step3 />}
       {step === 3 && <Step4 />}
       {step === 4 && <Step5 />}
@@ -499,6 +502,27 @@ export default function GuidePage() {
               참관인 신청하기
             </button>
           ) : null
+        ) : isLastStep && closed ? (
+          <div className="flex-1 flex flex-col gap-2">
+            <Link
+              href="/check"
+              className="py-3 text-center bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition-colors"
+            >
+              내 신청 확인
+            </Link>
+            <Link
+              href="/report"
+              className="py-3 text-center border-2 border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              참관 보고
+            </Link>
+            <Link
+              href="/"
+              className="py-3 text-center text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              홈으로
+            </Link>
+          </div>
         ) : isLastStep && skipQuiz ? (
           <button
             onClick={handleGuideComplete}
@@ -509,7 +533,7 @@ export default function GuidePage() {
         ) : (
           <button
             onClick={goNext}
-            disabled={step === 1 && !disqualifyConfirmed}
+            disabled={!closed && step === 1 && !disqualifyConfirmed}
             className="flex-1 py-3 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             확인했습니다
