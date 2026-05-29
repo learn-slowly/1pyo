@@ -46,6 +46,14 @@ function CheckContent() {
   const [results, setResults] = useState<ApplicationResult[] | null>(null);
   const [message, setMessage] = useState('');
   const [searched, setSearched] = useState(false);
+  const [closed, setClosed] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/config')
+      .then((r) => r.json())
+      .then((d) => setClosed(!!d.config?.recruiting_closed))
+      .catch(() => {});
+  }, []);
 
   const doSearch = useCallback(async (searchName: string, searchPhone: string) => {
     if (searchName.trim().length < 2 || searchPhone.replace(/[^0-9]/g, '').length < 10) return;
@@ -211,12 +219,14 @@ function CheckContent() {
         {searched && results && results.length === 0 && (
           <div className="text-center py-8">
             <p className="text-gray-500">{message || '신청 내역이 없습니다.'}</p>
-            <Link
-              href="/apply"
-              className="inline-block mt-4 px-6 py-2 bg-yellow-400 text-gray-900 font-medium rounded-lg hover:bg-yellow-500 transition-colors"
-            >
-              참관인 신청하기
-            </Link>
+            {!closed && (
+              <Link
+                href="/apply"
+                className="inline-block mt-4 px-6 py-2 bg-yellow-400 text-gray-900 font-medium rounded-lg hover:bg-yellow-500 transition-colors"
+              >
+                참관인 신청하기
+              </Link>
+            )}
           </div>
         )}
 
