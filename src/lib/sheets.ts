@@ -103,6 +103,8 @@ export async function getConfig(): Promise<Config> {
     contact_notice: configMap.contact_notice || '',
     guide_intro: configMap.guide_intro || '',
     guide_outro: configMap.guide_outro || '',
+    recruiting_closed: configMap.recruiting_closed === 'on',
+    closed_notice: configMap.closed_notice || '',
     blocked_sigungu_public,
   };
 

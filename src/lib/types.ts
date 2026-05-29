@@ -120,6 +120,8 @@ export interface Config {
   contact_notice: string;
   guide_intro: string;
   guide_outro: string;
+  recruiting_closed: boolean;
+  closed_notice: string;
   blocked_sigungu_public: string[];
 }
 
