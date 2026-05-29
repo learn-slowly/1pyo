@@ -46,7 +46,7 @@ function CheckContent() {
   const [results, setResults] = useState<ApplicationResult[] | null>(null);
   const [message, setMessage] = useState('');
   const [searched, setSearched] = useState(false);
-  const [closed, setClosed] = useState(false);
+  const [closed, setClosed] = useState<boolean | null>(null);
 
   useEffect(() => {
     fetch('/api/config')
@@ -219,7 +219,7 @@ function CheckContent() {
         {searched && results && results.length === 0 && (
           <div className="text-center py-8">
             <p className="text-gray-500">{message || '신청 내역이 없습니다.'}</p>
-            {!closed && (
+            {closed === false && (
               <Link
                 href="/apply"
                 className="inline-block mt-4 px-6 py-2 bg-yellow-400 text-gray-900 font-medium rounded-lg hover:bg-yellow-500 transition-colors"
