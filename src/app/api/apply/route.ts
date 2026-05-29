@@ -42,6 +42,14 @@ export async function POST(request: NextRequest) {
     // members_only 모드일 때 서버 측 당원 인증 재확인
     const config = await getConfig();
 
+    // 신청 마감 시 거부
+    if (config.recruiting_closed) {
+      return NextResponse.json(
+        { success: false, message: '참관인 신청이 마감되었습니다.' },
+        { status: 410 },
+      );
+    }
+
     // 일반 이용자에게 차단된 시군구는 신청 거부 (관리자·모집책은 별도 엔드포인트 사용)
     if (isSigunguBlockedForPublic(parsed.data.sigungu, config.blocked_sigungu_public)) {
       return NextResponse.json(
